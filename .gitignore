@@ -1,0 +1,20 @@
+# Emacs backups
+*~
+
+# IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+out/
+
+# Bin directory
+bin/
+
+# Log files
+*.log
+
+# tmp directories everywhere
+tmp/
+
+# Personal information
+personal-info/
+
