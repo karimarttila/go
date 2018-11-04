@@ -1,5 +1,5 @@
 // The main entry point to the Simple Server Go application.
-package main
+package simpleserver
 
 import (
 	"github.com/karimarttila/go/simpleserver/webserver"
