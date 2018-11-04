@@ -25,7 +25,7 @@
 
 # Go
 
-I was using [Go](https://golang.org//) 1.11 on Ubuntu18 when implementing this Simple Server. I used [dep](https://github.com/golang/go/wiki/PackageManagementTools) tool to mangage Go packages:
+I was using [Go](https://golang.org//) 1.11 on Ubuntu18 when implementing this Simple Server.
 
 You have to set the $GOPATH and $GOROOT environmental variables to point to your Go project directory and where your Go installation is. See example in (setenv.sh)[TODO].
 
@@ -35,6 +35,15 @@ pwd             => /mnt/edata/aw/kari/github/go
 echo $GOPATH    => /mnt/edata/aw/kari/github/go
 echo $GOROOT    => /mnt/local/go-1.11
 ```
+
+I used [dep](https://github.com/golang/go/wiki/PackageManagementTools) tool to mangage Go packages:
+
+```bash
+dep init src/github.com/karimarttila/go/simpleserver
+``` 
+
+NOTE: This is  a one time task and creates the [Gopkg.toml](TODO) file.
+
 
 And so we finalized our short tour to "Go and package management."
 
