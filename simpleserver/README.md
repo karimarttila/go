@@ -30,7 +30,7 @@ I was using [Go](https://golang.org//) 1.11 on Ubuntu18 when implementing this S
 You have to set the $GOPATH and $GOROOT environmental variables to point to your Go project directory and where your Go installation is. See example in (setenv.sh)[TODO].
 
 ```bash
-go version      =>go version go1.11.1 linux/amd64
+go version      => go version go1.11.1 linux/amd64
 pwd             => /mnt/edata/aw/kari/github/go
 echo $GOPATH    => /mnt/edata/aw/kari/github/go
 echo $GOROOT    => /mnt/local/go-1.11
