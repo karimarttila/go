@@ -62,9 +62,9 @@ func LogEnter(msg ...string) {
 	if MyConfig.Report_caller {
 		pc, _, _, _ := runtime.Caller(1)
 		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_ENTER, "caller": fn.Name()})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_ENTER, "caller": fn.Name()})
 	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_ENTER})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_ENTER})
 	}
 	myEntry.Debug(msg)
 }
@@ -74,9 +74,9 @@ func LogExit(msg ...string) {
 	if MyConfig.Report_caller {
 		pc, _, _, _ := runtime.Caller(1)
 		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_EXIT, "caller": fn.Name()})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_EXIT, "caller": fn.Name()})
 	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_EXIT})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_EXIT})
 	}
 	myEntry.Debug(msg)
 }
@@ -86,9 +86,9 @@ func LogDebug(msg ...string) {
 	if MyConfig.Report_caller {
 		pc, _, _, _ := runtime.Caller(1)
 		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_DEBUG, "caller": fn.Name()})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_MSG, "caller": fn.Name()})
 	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"logtype": LOG_TYPE_DEBUG})
+		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_MSG})
 	}
 	myEntry.Debug(msg)
 }
