@@ -1,5 +1,7 @@
 // Logging configuration package.
 // NOTE: In production code report caller (Report_caller) is expensive and should be turned off.
+// Provides three helper methods for logging function entry, exit and some arbitrary debug message.
+// Application can use any logrus logging method (error, info...) using directly MyLogger public variable.
 
 package util
 
@@ -56,7 +58,7 @@ func initLogger() (*logrus.Logger) {
 }
 
 
-
+// Log our custom function entry event.
 func LogEnter(msg ...string) {
 	var myEntry *logrus.Entry
 	if MyConfig.Report_caller {
@@ -69,6 +71,8 @@ func LogEnter(msg ...string) {
 	myEntry.Debug(msg)
 }
 
+
+// Log our custom function exit event.
 func LogExit(msg ...string) {
 	var myEntry *logrus.Entry
 	if MyConfig.Report_caller {
@@ -81,6 +85,8 @@ func LogExit(msg ...string) {
 	myEntry.Debug(msg)
 }
 
+
+// Log some arbitrary function debug message.
 func LogDebug(msg ...string) {
 	var myEntry *logrus.Entry
 	if MyConfig.Report_caller {

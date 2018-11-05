@@ -163,7 +163,17 @@ TODO
 
 # Logging
 
-TODO
+My good friend and Go guru Tuomo Varis told me not to use external libraries but to do everything using Go standard library (to learn it better). I considered this a moment but finally decided not to follow his good recommendation. The rationale being that I wanted to quickly implement the core functionalities of a web server and e.g. not to reinvent a logging framework myself. Therefore I used one of the most used Go logging framework [Logrus](https://github.com/sirupsen/logrus). 
+
+I had to do some tweaking myself to make the logging output as I wanted. E.g. Logrus provided function ```log.SetReportCaller(bool)``` out of the box but if enabled it logged the function name and the file name which was too verbose for me. Therefore I provided a couple of debugging utilities to log function entries and exits the way I wanted. See: [logger.go](https://github.com/karimarttila/go/blob/master/simpleserver/util/logger.go).
+
+Example of logging output:
+
+```text
+time="2018-11-05T21:59:36+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.handleRequests debugtype=ENTER
+time="2018-11-05T22:00:01+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.getInfo debugtype=ENTER
+time="2018-11-05T22:00:01+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.getInfo debugtype=EXIT
+```
 
 
 # Readability
