@@ -1,6 +1,7 @@
 package util
 
 const (
-	ENTER = "ENTER"
-	EXIT = "EXIT"
+	LOG_TYPE_ENTER = "ENTER"
+	LOG_TYPE_EXIT = "EXIT"
+	LOG_TYPE_DEBUG = "DEBUG"
 )

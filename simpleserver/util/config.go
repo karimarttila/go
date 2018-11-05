@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"github.com/tkanos/gonfig"
 	"os"
 	"path"
@@ -12,25 +13,29 @@ import (
 var MyConfig = initConfiguration()
 
 type Configuration struct {
-	Port              string
-	Connection_String string
+	Port              int
+	Report_caller     bool
+	Log_level         string
+	Log_file          string
 }
 
+// Initializes the configuration.
 func initConfiguration() (ret Configuration){
-	MyLogger.Debug(ENTER)
+	// NOTE: We cannot use the logger yet since it uses MyConfig which is not yet initialized (or initialization loop happens).
+	fmt.Println("simpleserver.util.config.go - initConfiguration - ENTER")
 	configuration := Configuration{}
 	err := gonfig.GetConf(getFileName(), &configuration)
 	if err != nil {
-		MyLogger.Error(err)
+		fmt.Println("simpleserver.util.config.go - initConfiguration - ERROR: " + err.Error())
 		os.Exit(500)
 	}
-	MyLogger.Debug(EXIT)
+	fmt.Println("simpleserver.util.config.go - initConfiguration - EXIT")
 	return configuration
 }
 
 
 func getFileName() string {
-	MyLogger.Debug(ENTER)
+	fmt.Println("simpleserver.util.config.go - getFileName - ENTER")
 	env := os.Getenv("SS_ENV")
 	if len(env) == 0 {
 		env = "dev"
@@ -38,6 +43,6 @@ func getFileName() string {
 	filename := []string{"../config", "/config.", env, ".json"}
 	_, dirname, _, _ := runtime.Caller(0)
 	filePath := path.Join(filepath.Dir(dirname), strings.Join(filename, ""))
-	MyLogger.Debug(EXIT)
+	fmt.Println("simpleserver.util.config.go - getFileName - EXIT")
 	return filePath
 }

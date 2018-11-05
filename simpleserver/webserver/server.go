@@ -8,26 +8,28 @@ import (
 	"github.com/karimarttila/go/simpleserver/util"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func getInfo(w http.ResponseWriter, r *http.Request) {
-	util.MyLogger.Debug(util.ENTER)
+	util.LogEnter()
 	fmt.Fprintf(w, "This is info")
-	util.MyLogger.Debug(util.EXIT)
+	util.LogExit()
 }
 
 func handleRequests() {
-	util.MyLogger.Debug(util.ENTER)
+	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
-	log.Fatal(http.ListenAndServe(":" + util.MyConfig.Port, nil))
-	util.MyLogger.Debug(util.EXIT)
+	log.Fatal(http.ListenAndServe(":" + strconv.Itoa(util.MyConfig.Port), nil))
+	util.LogExit()
 }
 
 // The main entry point to the file.
 // Remember that exportable functions begin with a capital letter.
 func StartServer() {
-	util.MyLogger.Debug(util.ENTER)
+	util.LogEnter()
 	handleRequests()
-	util.MyLogger.Debug(util.EXIT)
+	util.LogExit()
 }
+
