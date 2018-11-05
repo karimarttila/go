@@ -3,7 +3,7 @@
 
 # Table of Contents  <!-- omit in toc -->
 - [Introduction](#introduction)
-- [Tools and Versions](#tools-and-versions)
+- [Learning Process](#learning-process)
 - [Go](#go)
 - [GoLand](#goland)
 - [Go Code Format](#go-code-format)
@@ -20,8 +20,19 @@
 # Introduction
 
 
-# Tools and Versions
+# Learning Process
 
+I had practically zero knowledge of Go when I started this project. I watched one short "Go Basics" type Pluralsight video before starting to program Go. Mostly everthing I just learned on the fly while doing programming. E.g. I was wondering what to do in a situation in which some Go function returns three distinct return values but I need only one? I handled these situations just by googling, e.g.  ```go function returns multiple values "unused variable"``` => use underscore for those variables you don't need.
+
+For my own learning purposes I commented quite a few of these lines so that I can use this Go code of Simple Server for my future reference implementation of Go. Example:
+
+```go
+// NOTE: In Go public variables and functions start with capital letter.
+var MyLogger = initLogger()
+...
+// NOTE: Use underscore '_' when you don't need to reference certain return values.
+pc, _, _, _ := runtime.Caller(1)
+```
 
 # Go
 

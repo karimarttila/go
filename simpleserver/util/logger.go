@@ -13,6 +13,7 @@ import (
 	"runtime"
 )
 
+// NOTE: In Go public variables and functions start with capital letter.
 var MyLogger = initLogger()
 
 func getLogLevel() (logrus.Level) {
@@ -41,6 +42,7 @@ func getLogLevel() (logrus.Level) {
 
 
 func initLogger() (*logrus.Logger) {
+	fmt.Println("simpleserver.util.logger.go - initLogger - ENTER")
 	var log = logrus.New()
 	log.Formatter = new(logrus.TextFormatter)
 	log.Formatter.(*logrus.TextFormatter).DisableColors = true
@@ -54,6 +56,7 @@ func initLogger() (*logrus.Logger) {
 	} else {
 		log.Error("Failed to log to file, using default stderr")
 	}
+	fmt.Println("simpleserver.util.logger.go - initLogger - EXIT")
 	return log
 }
 
@@ -76,6 +79,7 @@ func LogEnter(msg ...string) {
 func LogExit(msg ...string) {
 	var myEntry *logrus.Entry
 	if MyConfig.Report_caller {
+		// NOTE: Use underscore '_' when you don't need to reference certain return values.
 		pc, _, _, _ := runtime.Caller(1)
 		fn := runtime.FuncForPC(pc)
 		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_EXIT, "caller": fn.Name()})

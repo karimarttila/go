@@ -11,12 +11,16 @@ import (
 	"strconv"
 )
 
+
+// /info API.
 func getInfo(w http.ResponseWriter, r *http.Request) {
 	util.LogEnter()
-	fmt.Fprintf(w, "This is info")
+	fmt.Fprintf(w, "TODO: This is info")
 	util.LogExit()
 }
 
+
+// Registers the API calls.
 func handleRequests() {
 	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
