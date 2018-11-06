@@ -34,6 +34,8 @@ var MyLogger = initLogger()
 pc, _, _, _ := runtime.Caller(1)
 ```
 
+It's really fun and interesting to learn a new computer program. When you have zero knowledge before taking the challenge learning the new language is a kind of exploration expedition to a new land with different language and customs - the only way to effectively learn it is to go for the expedition.
+
 # Go
 
 I was using [Go](https://golang.org//) 1.11 on Ubuntu18 when implementing this Simple Server.
