@@ -19,4 +19,6 @@ func main() {
 	util.LogDebug("- Log_file: " + util.MyConfig.Log_file)
 	webserver.StartServer()
 	util.LogExit()
+	// Finally close the log file.
+	//util.MyLogFile.Close()
 }

@@ -57,6 +57,8 @@ NOTE: This is  a one time task and creates the [Gopkg.toml](TODO) file.
 
 Running ```dep ensure``` in the project (simpleserver) updates the [Gopkg.lock](TODO) file and creates a vendor directory (not in Git). 
 
+I created a Git repo for this project and added it under the GOPATH in my machine. I also used the go get <url> to load the source code of the dependencies that I'm using (e.g. Logrus).
+
 TODO: Read more about dep ensure and vendor!
 
 
@@ -174,17 +176,38 @@ TODO
 
 # Logging
 
-My good friend and Go guru Tuomo Varis told me not to use external libraries but to do everything using Go standard library (to learn it better). I considered this a moment but finally decided not to follow his good recommendation. The rationale being that I wanted to quickly implement the core functionalities of a web server and e.g. not to reinvent a logging framework myself. Therefore I used one of the most used Go logging framework [Logrus](https://github.com/sirupsen/logrus). 
+My good friend and Go guru Tuomo Varis told me not to use external libraries but to do everything using Go standard library (to learn it better). I considered this a moment but first decided not to follow his good recommendation. The rationale being that I wanted to quickly implement the core functionalities of a web server and e.g. not to reinvent a logging framework myself. Therefore I used one of the most used Go logging framework [Logrus](https://github.com/sirupsen/logrus). 
 
-I had to do some tweaking myself to make the logging output as I wanted. E.g. Logrus provided function ```log.SetReportCaller(bool)``` out of the box but if enabled it logged the function name and the file name which was too verbose for me. Therefore I provided a couple of debugging utilities to log function entries and exits the way I wanted. See: [logger.go](https://github.com/karimarttila/go/blob/master/simpleserver/util/logger.go).
+But when discussing with Tuomo and he convinced me that implementing a simple logger based on the Go standard library logger should be rather simple I took the challenge and implemented my own custom [logger.go](https://github.com/karimarttila/go/blob/master/simpleserver/util/logger.go) based on the Go standard library logger. Basically I just implemented various log levels, my custom function entry/exit logging and some custom formatting of log entries.
 
 Example of logging output:
+
+```text
+[2018-11-06T20:04:05.507Z] - [DEBUG] [main.main] - ENTER
+[2018-11-06T20:04:05.507Z] - [DEBUG] [main.main] - Starting server...
+[2018-11-06T20:04:05.507Z] - [DEBUG] [main.main] - - Port: 4047
+[2018-11-06T20:04:05.507Z] - [DEBUG] [main.main] - - Report_caller: true
+[2018-11-06T20:04:05.507Z] - [DEBUG] [main.main] - - Log_level: debug
+[2018-11-06T20:04:05.508Z] - [DEBUG] [main.main] - - Log_file: src/github.com/karimarttila/go/simpleserver/logs/simpleserver.log
+[2018-11-06T20:04:05.508Z] - [DEBUG] [webserver.StartServer] - ENTER
+[2018-11-06T20:04:05.508Z] - [DEBUG] [webserver.handleRequests] - ENTER
+[2018-11-06T20:04:06.673Z] - [DEBUG] [webserver.getInfo] - ENTER
+[2018-11-06T20:04:06.673Z] - [DEBUG] [webserver.getInfo] - EXIT
+```
+
+Old a bit tweaked Logrus did the following output:
 
 ```text
 time="2018-11-05T21:59:36+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.handleRequests debugtype=ENTER
 time="2018-11-05T22:00:01+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.getInfo debugtype=ENTER
 time="2018-11-05T22:00:01+02:00" level=debug msg="[]" caller=github.com/karimarttila/go/simpleserver/webserver.getInfo debugtype=EXIT
 ```
+
+So, you can decide which one is better. Personally I like my output better since it is more concise and readable (when implementing new server I always log at debug level all method/function entries/exits to provide good insight what is happening in the server while running in development mode - in production debug is turned off, of course). 
+
+I also like the idea that there are no extra dependencies because of the logger but the logger is implemented using just Go standard library.
+
+Thanks Tuomo for being stringent with my Go studies!
 
 
 # Readability

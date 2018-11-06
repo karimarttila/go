@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+// TODO: Make your own implementation based on Go standard library and not use extra dependencies!
+
 var MyConfig = initConfiguration()
 
 type Configuration struct {

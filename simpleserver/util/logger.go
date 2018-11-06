@@ -1,38 +1,59 @@
 // Logging configuration package.
 // NOTE: In production code report caller (Report_caller) is expensive and should be turned off.
-// Provides three helper methods for logging function entry, exit and some arbitrary debug message.
-// Application can use any logrus logging method (error, info...) using directly MyLogger public variable.
-
+// Provides two helper methods for logging function entry and exit.
 package util
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
+	"log"
 	"os"
 	"runtime"
+	"strings"
+	"time"
 )
 
-// NOTE: In Go public variables and functions start with capital letter.
-var MyLogger = initLogger()
+func init() {
+	log.SetFlags(0)
+	file, err := os.OpenFile(MyConfig.Log_file, os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+	0666)
+	if err == nil {
+		mw := io.MultiWriter(os.Stdout, file)
+		log.SetOutput(mw)
+	} else {
+		log.Fatal("Failed to open log file %s, using just stdout", MyConfig.Log_file)
+		log.SetOutput(os.Stdout)
+	}
+}
 
-func getLogLevel() (logrus.Level) {
-	var myLogLevel logrus.Level
+type SSLogLevel int
+
+const (
+	SS_LOG_LEVEL_TRACE SSLogLevel = iota
+	SS_LOG_LEVEL_DEBUG
+	SS_LOG_LEVEL_INFO
+	SS_LOG_LEVEL_WARN
+	SS_LOG_LEVEL_ERROR
+	SS_LOG_LEVEL_FATAL
+)
+
+var MyLogLevel = initLogLevel()
+
+func initLogLevel() (SSLogLevel) {
+	var myLogLevel SSLogLevel
 	switch MyConfig.Log_level {
-	case "panic":
-		myLogLevel = logrus.PanicLevel
-	case "fatal":
-		myLogLevel = logrus.FatalLevel
-	case "error":
-		myLogLevel = logrus.ErrorLevel
-	case "warn":
-		myLogLevel = logrus.WarnLevel
-	case "info":
-		myLogLevel = logrus.InfoLevel
-	case "debug":
-		myLogLevel = logrus.DebugLevel
 	case "trace":
-		myLogLevel = logrus.TraceLevel
+		myLogLevel = SS_LOG_LEVEL_TRACE
+	case "debug":
+		myLogLevel = SS_LOG_LEVEL_DEBUG
+	case "info":
+		myLogLevel = SS_LOG_LEVEL_INFO
+	case "warn":
+		myLogLevel = SS_LOG_LEVEL_WARN
+	case "error":
+		myLogLevel = SS_LOG_LEVEL_ERROR
+	case "fatal":
+		myLogLevel = SS_LOG_LEVEL_FATAL
 	default:
 		fmt.Println("simpleserver.util.logger.go - getLogLevel - ERROR: Unknown log level: " + MyConfig.Log_level)
 		os.Exit(500)
@@ -40,68 +61,83 @@ func getLogLevel() (logrus.Level) {
 	return myLogLevel
 }
 
-
-func initLogger() (*logrus.Logger) {
-	fmt.Println("simpleserver.util.logger.go - initLogger - ENTER")
-	var log = logrus.New()
-	log.Formatter = new(logrus.TextFormatter)
-	log.Formatter.(*logrus.TextFormatter).DisableColors = true
-	log.Level = getLogLevel()
-	// Let's handle this ourselves. We don't want the file name there.
-	log.SetReportCaller(false)
-	file, err := os.OpenFile(MyConfig.Log_file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err == nil {
-		mw := io.MultiWriter(os.Stdout, file)
-		log.SetOutput(mw)
-	} else {
-		log.Error("Failed to log to file, using default stderr")
+func (level SSLogLevel) String() string {
+	levels := [...]string {
+		"TRACE",
+		"DEBUG",
+		"INFO",
+		"WARN",
+		"ERROR",
+		"FATAL"}
+	if level < SS_LOG_LEVEL_TRACE || level > SS_LOG_LEVEL_FATAL {
+		return "Unknown SS_LOG_LEVEL"
 	}
-	fmt.Println("simpleserver.util.logger.go - initLogger - EXIT")
-	return log
+	ret := levels[level]
+	return ret
 }
 
+func logIt(msg string, level SSLogLevel) {
+	var caller string
+	var entry string
+	var timeStamp = fmt.Sprintf(time.Now().UTC().Format("2006-01-02T15:04:05.999Z"))
+	if level >= MyLogLevel {
+		if MyConfig.Report_caller {
+			pc, _, _, _ := runtime.Caller(2)
+			fn := runtime.FuncForPC(pc)
+			caller = fn.Name()
+			caller = strings.Replace(caller, "github.com/karimarttila/go/simpleserver/", "", 1)
+			entry = fmt.Sprintf("[%s] - [%s] [%s] - %s", timeStamp, level, caller, msg)
+		} else {
+			entry = fmt.Sprintf("[%s] - [%s] - %s", timeStamp, level, msg)
+		}
+		log.Println(entry)
+	}
+}
+
+func LogTrace(msg string) {
+	logIt(msg, SS_LOG_LEVEL_TRACE)
+}
+
+func LogDebug(msg string) {
+	logIt(msg, SS_LOG_LEVEL_DEBUG)
+}
+
+func LogInfo(msg string) {
+	logIt(msg, SS_LOG_LEVEL_INFO)
+}
+
+func LogWarn(msg string) {
+	logIt(msg, SS_LOG_LEVEL_WARN)
+}
+
+func LogError(msg string) {
+	logIt(msg, SS_LOG_LEVEL_ERROR)
+}
+
+func LogFatal(msg string) {
+	logIt(msg, SS_LOG_LEVEL_FATAL)
+}
 
 // Log our custom function entry event.
 func LogEnter(msg ...string) {
-	var myEntry *logrus.Entry
-	if MyConfig.Report_caller {
-		pc, _, _, _ := runtime.Caller(1)
-		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_ENTER, "caller": fn.Name()})
-	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_ENTER})
+	buf := DEBUG_TYPE_ENTER
+	if len(msg) > 0 {
+		buf = buf + " - " + strings.Join(msg, " ")
 	}
-	myEntry.Debug(msg)
+	logIt(buf, SS_LOG_LEVEL_DEBUG)
 }
-
 
 // Log our custom function exit event.
 func LogExit(msg ...string) {
-	var myEntry *logrus.Entry
-	if MyConfig.Report_caller {
-		// NOTE: Use underscore '_' when you don't need to reference certain return values.
-		pc, _, _, _ := runtime.Caller(1)
-		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_EXIT, "caller": fn.Name()})
-	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_EXIT})
+	buf := DEBUG_TYPE_EXIT
+	if len(msg) > 0 {
+		buf = buf + " - " + strings.Join(msg, " ")
 	}
-	myEntry.Debug(msg)
+	logIt(buf, SS_LOG_LEVEL_DEBUG)
 }
 
 
-// Log some arbitrary function debug message.
-func LogDebug(msg ...string) {
-	var myEntry *logrus.Entry
-	if MyConfig.Report_caller {
-		pc, _, _, _ := runtime.Caller(1)
-		fn := runtime.FuncForPC(pc)
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_MSG, "caller": fn.Name()})
-	} else {
-		myEntry = MyLogger.WithFields(logrus.Fields{"debugtype": DEBUG_TYPE_MSG})
-	}
-	myEntry.Debug(msg)
-}
+
 
 
 
