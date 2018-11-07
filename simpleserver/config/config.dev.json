@@ -1,6 +1,0 @@
-{
-	"Port": 4047,
-	"Report_caller": true,
-	"Log_level": "debug",
-	"Log_file": "src/github.com/karimarttila/go/simpleserver/logs/simpleserver.log"
-}

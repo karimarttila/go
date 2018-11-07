@@ -1,6 +1,4 @@
-// Logging configuration package.
-// NOTE: In production code report caller (Report_caller) is expensive and should be turned off.
-// Provides two helper methods for logging function entry and exit.
+// Utilities package.
 package util
 
 import (
@@ -13,17 +11,34 @@ import (
 	"time"
 )
 
-func init() {
+// Logging configuration.
+// NOTE: In production code report caller (Report_caller) is expensive and should be turned off.
+// Provides two helper methods for logging function entry and exit.
+
+
+var myLogFileHandle = initLogger()
+
+func initLogger() (*os.File) {
+	fmt.Println("simpleserver.util.logger - initLogger - ENTER")
 	log.SetFlags(0)
-	file, err := os.OpenFile(MyConfig.Log_file, os.O_CREATE|os.O_WRONLY|os.O_APPEND,
+	filename := MyConfig["log_file"]
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND,
 	0666)
 	if err == nil {
 		mw := io.MultiWriter(os.Stdout, file)
 		log.SetOutput(mw)
 	} else {
-		log.Fatal("Failed to open log file %s, using just stdout", MyConfig.Log_file)
+		log.Fatal("Failed to open log file " + filename + ", using just stdout, ERROR: " + err.Error())
 		log.SetOutput(os.Stdout)
 	}
+	fmt.Println("simpleserver.util.logger - initLogger - EXIT")
+	return file
+}
+
+func CloseLog() {
+	fmt.Println("simpleserver.util.logger - CloseLog - ENTER")
+	myLogFileHandle.Close()
+	fmt.Println("simpleserver.util.logger - CloseLog - EXIT")
 }
 
 type SSLogLevel int
@@ -38,10 +53,13 @@ const (
 )
 
 var MyLogLevel = initLogLevel()
+var MyReportCaller = initReportCaller()
+
 
 func initLogLevel() (SSLogLevel) {
+	fmt.Println("simpleserver.util.logger - initLogLevel - ENTER")
 	var myLogLevel SSLogLevel
-	switch MyConfig.Log_level {
+	switch MyConfig["log_level"] {
 	case "trace":
 		myLogLevel = SS_LOG_LEVEL_TRACE
 	case "debug":
@@ -55,12 +73,22 @@ func initLogLevel() (SSLogLevel) {
 	case "fatal":
 		myLogLevel = SS_LOG_LEVEL_FATAL
 	default:
-		fmt.Println("simpleserver.util.logger.go - getLogLevel - ERROR: Unknown log level: " + MyConfig.Log_level)
+		fmt.Println("simpleserver.util.logger.go - getLogLevel - ERROR: Unknown log level: " + MyConfig["log_level"])
 		os.Exit(500)
 	}
+	fmt.Println("simpleserver.util.logger - initLogLevel - EXIT")
 	return myLogLevel
 }
 
+func initReportCaller() (bool) {
+	if MyConfig["report_caller"] == "true" {
+		return true
+	} else {
+		return false
+	}
+}
+
+// Provides string representation for log levels.
 func (level SSLogLevel) String() string {
 	levels := [...]string {
 		"TRACE",
@@ -81,7 +109,7 @@ func logIt(msg string, level SSLogLevel) {
 	var entry string
 	var timeStamp = fmt.Sprintf(time.Now().UTC().Format("2006-01-02T15:04:05.999Z"))
 	if level >= MyLogLevel {
-		if MyConfig.Report_caller {
+		if MyReportCaller {
 			pc, _, _, _ := runtime.Caller(2)
 			fn := runtime.FuncForPC(pc)
 			caller = fn.Name()
@@ -94,26 +122,32 @@ func logIt(msg string, level SSLogLevel) {
 	}
 }
 
+// Log trace.
 func LogTrace(msg string) {
 	logIt(msg, SS_LOG_LEVEL_TRACE)
 }
 
+// Log debug.
 func LogDebug(msg string) {
 	logIt(msg, SS_LOG_LEVEL_DEBUG)
 }
 
+// Log info.
 func LogInfo(msg string) {
 	logIt(msg, SS_LOG_LEVEL_INFO)
 }
 
+// Log warning.
 func LogWarn(msg string) {
 	logIt(msg, SS_LOG_LEVEL_WARN)
 }
 
+// Log error.
 func LogError(msg string) {
 	logIt(msg, SS_LOG_LEVEL_ERROR)
 }
 
+// Log fatal.
 func LogFatal(msg string) {
 	logIt(msg, SS_LOG_LEVEL_FATAL)
 }
@@ -135,10 +169,3 @@ func LogExit(msg ...string) {
 	}
 	logIt(buf, SS_LOG_LEVEL_DEBUG)
 }
-
-
-
-
-
-
-

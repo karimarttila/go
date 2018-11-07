@@ -10,7 +10,7 @@
 # - 2018-11-02: First version.
 
 
-export GOPATH=$(pwd)
+export GOPATH=/mnt/edata/aw/kari/github/go
 echo "GOPATH="$GOPATH
 export GOROOT=/mnt/local/go-1.11
 export PATH=$GOROOT/bin:$GOPATH/bin:$PATH

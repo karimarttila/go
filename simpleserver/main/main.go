@@ -4,7 +4,6 @@ package main
 import (
 	"github.com/karimarttila/go/simpleserver/util"
 	"github.com/karimarttila/go/simpleserver/webserver"
-	"strconv"
 )
 
 
@@ -13,12 +12,12 @@ import (
 func main() {
 	util.LogEnter()
 	util.LogDebug("Starting server...")
-	util.LogDebug("- Port: " + strconv.Itoa(util.MyConfig.Port))
-	util.LogDebug("- Report_caller: " + strconv.FormatBool(util.MyConfig.Report_caller))
-	util.LogDebug("- Log_level: " + util.MyConfig.Log_level)
-	util.LogDebug("- Log_file: " + util.MyConfig.Log_file)
+	util.LogDebug("- port: " + util.MyConfig["port"])
+	util.LogDebug("- report_caller: " + util.MyConfig["report_caller"])
+	util.LogDebug("- log_level: " + util.MyConfig["log_level"])
+	util.LogDebug("- log_file: " + util.MyConfig["log_file"])
 	webserver.StartServer()
 	util.LogExit()
 	// Finally close the log file.
-	//util.MyLogFile.Close()
+	util.CloseLog()
 }

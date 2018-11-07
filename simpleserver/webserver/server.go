@@ -4,28 +4,51 @@
 package webserver
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"github.com/karimarttila/go/simpleserver/util"
 	"log"
 	"net/http"
-	"strconv"
 )
+
+type InfoMessage struct {
+    Info   string      `json:"info"`
+}
+
+//
+func JSONMarshalPreserveHTMLCharacters(t interface{}) ([]byte, error) {
+    buffer := &bytes.Buffer{}
+    encoder := json.NewEncoder(buffer)
+    encoder.SetEscapeHTML(false)
+    err := encoder.Encode(t)
+    return buffer.Bytes(), err
+}
 
 
 // /info API.
-func getInfo(w http.ResponseWriter, r *http.Request) {
+func getInfo(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
-	fmt.Fprintf(w, "TODO: This is info")
+	infoMsg := &InfoMessage{Info: "index.html => Info in HTML format"}
+	retBytes, err := JSONMarshalPreserveHTMLCharacters(infoMsg)
+	httpStatus := http.StatusOK
+	if err != nil {
+		retBytes = []byte(`{"info":"JSON parsing failed in getInfo"}`)
+		httpStatus = http.StatusBadRequest
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(httpStatus)
+	writer.Write(retBytes)
 	util.LogExit()
 }
 
+//{"info":"index.html => Info in HTML format"}
 
 // Registers the API calls.
 func handleRequests() {
 	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
-	log.Fatal(http.ListenAndServe(":" + strconv.Itoa(util.MyConfig.Port), nil))
+	log.Fatal(http.ListenAndServe(":" + util.MyConfig["port"], nil))
 	util.LogExit()
 }
 

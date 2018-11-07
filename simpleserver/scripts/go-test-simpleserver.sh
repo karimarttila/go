@@ -1,0 +1,3 @@
+#!/bin/bash
+
+go test github.com/karimarttila/go/simpleserver/...
