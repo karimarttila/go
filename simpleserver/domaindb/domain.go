@@ -10,11 +10,14 @@ import (
 	"strings"
 )
 
+// DomainDB singleton.
+var myDomainDB = initDomainDb()
+
+
 type ProductGroups struct {
     ProductGroupsMap   map[string]string   `json:"product-groups"`
 }
 
-var myDomainDB = initDomainDb()
 
 type DomainDb struct {
 	productGroups  ProductGroups
@@ -59,6 +62,7 @@ func initDomainDb() (DomainDb){
 	return ret
 }
 
+// Gets the product groups.
 func GetProductGroups() (ProductGroups) {
 	util.LogEnter()
 	ret := myDomainDB.productGroups

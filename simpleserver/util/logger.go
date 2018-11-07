@@ -107,7 +107,7 @@ func (level SSLogLevel) String() string {
 func logIt(msg string, level SSLogLevel) {
 	var caller string
 	var entry string
-	var timeStamp = fmt.Sprintf(time.Now().UTC().Format("2006-01-02T15:04:05.999Z"))
+	var timeStamp = fmt.Sprint(time.Now().UTC().Format("2006-01-02T15:04:05.999Z"))
 	if level >= MyLogLevel {
 		if MyReportCaller {
 			pc, _, _, _ := runtime.Caller(2)
