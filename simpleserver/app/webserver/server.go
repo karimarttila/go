@@ -6,7 +6,7 @@ package webserver
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/karimarttila/go/simpleserver/util"
+	"github.com/karimarttila/go/simpleserver/app/util"
 	"log"
 	"net/http"
 )

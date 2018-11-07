@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go run main/main.go
+go run app/main/main.go

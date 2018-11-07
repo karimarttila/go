@@ -1,7 +1,7 @@
 package webserver
 
 import (
-	"github.com/karimarttila/go/simpleserver/util"
+	"github.com/karimarttila/go/simpleserver/app/util"
 	"net/http"
 	"net/http/httptest"
 	"strings"

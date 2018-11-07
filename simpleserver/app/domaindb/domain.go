@@ -2,7 +2,7 @@ package domaindb
 
 import (
 	"encoding/csv"
-	"github.com/karimarttila/go/simpleserver/util"
+	"github.com/karimarttila/go/simpleserver/app/util"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,7 +28,7 @@ func readProductGroups() (ProductGroups) {
 	var productGroups ProductGroups
 	dir, _ := os.Getwd()
 	util.LogDebug("dir: " + dir)
-	fileName := []string{"../resources/product-groups.csv"}
+	fileName := []string{"../../resources/product-groups.csv"}
 	_, dirName, _, _ := runtime.Caller(0)
 	filePath := path.Join(filepath.Dir(dirName), strings.Join(fileName, ""))
 	csvFile, err := os.Open(filePath)

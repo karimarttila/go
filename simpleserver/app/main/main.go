@@ -2,8 +2,8 @@
 package main
 
 import (
-	"github.com/karimarttila/go/simpleserver/util"
-	"github.com/karimarttila/go/simpleserver/webserver"
+	"github.com/karimarttila/go/simpleserver/app/util"
+	"github.com/karimarttila/go/simpleserver/app/webserver"
 )
 
 

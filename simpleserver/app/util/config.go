@@ -57,7 +57,7 @@ func getFileName() string {
 	if len(env) == 0 {
 		env = "dev"
 	}
-	filename := []string{"../config", "/" + env + "-config.properties"}
+	filename := []string{"../../config", "/" + env + "-config.properties"}
 	_, dirname, _, _ := runtime.Caller(0)
 	filePath := path.Join(filepath.Dir(dirname), strings.Join(filename, ""))
 	fmt.Println("simpleserver.util.config.go - getFileName - EXIT")
