@@ -9,7 +9,7 @@ import (
 func TestGetProductGroups(t *testing.T) {
 	util.LogEnter()
 	myProductGroups := GetProductGroups()
-	myPGMap := myProductGroups.productGroups
+	myPGMap := myProductGroups.ProductGroupsMap
 	if len(myPGMap) != 2 {
 		t.Errorf("There should be exactly two product groups, got: %d", len(myPGMap))
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 type ProductGroups struct {
-    productGroups   map[string]string   `json:"product-groups"`
+    ProductGroupsMap   map[string]string   `json:"product-groups"`
 }
 
 var myDomainDB = initDomainDb()
