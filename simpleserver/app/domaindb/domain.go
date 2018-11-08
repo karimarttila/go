@@ -7,28 +7,56 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
 // DomainDB singleton.
 var myDomainDB = initDomainDb()
 
-
 type ProductGroups struct {
-    ProductGroupsMap   map[string]string   `json:"product-groups"`
+	ProductGroupsMap map[string]string `json:"product-groups"`
 }
 
+type RawProduct struct {
+	PgId             int
+	PId              int
+	Title            string
+	Price            float64
+	AuthorOrDirector string
+	Year             int
+	Country          string
+	GenreOrLanguage  string
+}
+
+type Product struct {
+	PgId             int
+	PId              int
+	Title            string
+	Price            float64
+}
+
+type RawProducts struct {
+	RawProductsList []RawProduct `json:"raw-product-groups"`
+}
+
+type Products struct {
+	ProductsList []Product `json:"product-groups"`
+	Ret string `json:"ret"`
+}
 
 type DomainDb struct {
-	productGroups  ProductGroups
+	productGroups ProductGroups
+	rawProductsMap map[int]RawProducts
+	productsMap map[int]Products
 }
 
-func readProductGroups() (ProductGroups) {
+func readCsvFile(csvFileName string) [][]string {
 	util.LogEnter()
-	var productGroups ProductGroups
+	var lines [][]string
 	dir, _ := os.Getwd()
 	util.LogDebug("dir: " + dir)
-	fileName := []string{"../../resources/product-groups.csv"}
+	fileName := []string{"../../resources/" + csvFileName}
 	_, dirName, _, _ := runtime.Caller(0)
 	filePath := path.Join(filepath.Dir(dirName), strings.Join(fileName, ""))
 	csvFile, err := os.Open(filePath)
@@ -37,35 +65,85 @@ func readProductGroups() (ProductGroups) {
 	} else {
 		reader := csv.NewReader(csvFile)
 		reader.Comma = '\t'
-		lines, err := reader.ReadAll()
+		lines, err = reader.ReadAll()
 		if err != nil {
 			util.LogError("Failed to read csv file: " + filePath)
-		} else {
-			myPG := make(map[string]string)
-			for _, row := range lines {
-				myPG[row[0]] = row[1]
-			}
-			productGroups = ProductGroups{myPG}
 		}
 	}
+	util.LogExit()
+	return lines
+}
+
+func readProductGroups() ProductGroups {
+	util.LogEnter()
+	lines := readCsvFile("product-groups.csv")
+	myPG := make(map[string]string)
+	for _, line := range lines {
+		myPG[line[0]] = line[1]
+	}
+	productGroups := ProductGroups{myPG}
 	util.LogExit()
 	return productGroups
 }
 
-func initDomainDb() (DomainDb){
+func readProducts(pgId int) (RawProducts, Products) {
+	util.LogEnter()
+	lines := readCsvFile("pg-" + strconv.Itoa(pgId) + "-productsproduct-groups.csv")
+	count := len(lines)
+	rawProductsList := make([]RawProduct, count)
+	productsList := make([]Product, count)
+	i := 0
+	for _, line := range lines {
+		pgId, _ := strconv.Atoi(line[0])
+		pId, _  := strconv.Atoi(line[1])
+		title := line[2]
+		price, _ := strconv.ParseFloat(line[3], 64)
+		authorOrDirector := line[4]
+		year, _ := strconv.Atoi(line[5])
+		country := line[6]
+		genreOrLanguage := line[7]
+		rawProductsList[i] = RawProduct{pgId, pId, title, price, authorOrDirector, year, country, genreOrLanguage }
+		productsList[i] = Product{pgId, pId, title, price}
+		i++
+	}
+	rawProducts := RawProducts{ rawProductsList}
+	products := Products{ productsList, "ok"}
+	util.LogExit()
+	return rawProducts, products
+}
+
+
+func initDomainDb() DomainDb {
 	util.LogEnter()
 	myProductGroups := readProductGroups()
-	ret := DomainDb {
-		productGroups: myProductGroups,
+	pgMap := myProductGroups.ProductGroupsMap
+	pgKeys := make([]string, len(pgMap))
+	rawProductsMap := make(map[int]RawProducts)
+	productsMap := make(map[int]Products)
+	for i := range pgKeys {
+		pgId, _ := strconv.Atoi(pgKeys[i])
+		rawProducts, products := readProducts(pgId)
+		rawProductsMap[i] = rawProducts
+		productsMap[i] = products
 	}
+	ret := DomainDb{
+		productGroups: myProductGroups, rawProductsMap: rawProductsMap, productsMap: productsMap}
 	util.LogExit()
 	return ret
 }
 
-// Gets the product groups.
-func GetProductGroups() (ProductGroups) {
+// Gets product groups.
+func GetProductGroups() ProductGroups {
 	util.LogEnter()
 	ret := myDomainDB.productGroups
+	util.LogExit()
+	return ret
+}
+
+// Gets products
+func GetProducts(pgId int) Products {
+	util.LogEnter()
+	ret := myDomainDB.productsMap[pgId]
 	util.LogExit()
 	return ret
 }

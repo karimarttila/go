@@ -15,41 +15,40 @@ var MyConfig = readProperties()
 
 type Config map[string]string
 
-func readProperties() (Config) {
+func readProperties() Config {
 	fmt.Println("simpleserver.util.config. - readProperties - ENTER")
-    config := Config{}
-    filename := getFileName()
-    if len(filename) == 0 {
+	config := Config{}
+	filename := getFileName()
+	if len(filename) == 0 {
 		fmt.Println("simpleserver.util.config.go - readProperties - ERROR: file name was empty")
 		os.Exit(500)
-    }
-    file, err := os.Open(filename)
-    if err != nil {
+	}
+	file, err := os.Open(filename)
+	if err != nil {
 		fmt.Println("simpleserver.util.config.go - readProperties - ERROR: error opening file: " + err.Error())
 		os.Exit(500)
-    }
-    defer file.Close()
-    scanner := bufio.NewScanner(file)
-    for scanner.Scan() {
-        line := scanner.Text()
-        if equal := strings.Index(line, "="); equal >= 0 {
-            if key := strings.TrimSpace(line[:equal]); len(key) > 0 {
-                value := ""
-                if len(line) > equal {
-                    value = strings.TrimSpace(line[equal+1:])
-                }
-                config[key] = value
-            }
-        }
-    }
-    if err := scanner.Err(); err != nil {
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if equal := strings.Index(line, "="); equal >= 0 {
+			if key := strings.TrimSpace(line[:equal]); len(key) > 0 {
+				value := ""
+				if len(line) > equal {
+					value = strings.TrimSpace(line[equal+1:])
+				}
+				config[key] = value
+			}
+		}
+	}
+	if err := scanner.Err(); err != nil {
 		fmt.Println("simpleserver.util.config.go - readProperties - ERROR: error while scanning file: " + err.Error())
 		os.Exit(500)
-    }
+	}
 	fmt.Println("simpleserver.util.config. - readProperties - EXIT")
-    return config
+	return config
 }
-
 
 func getFileName() string {
 	fmt.Println("simpleserver.util.config.go - getFileName - ENTER")

@@ -14,9 +14,9 @@ func TestGetInfo(t *testing.T) {
 	request := httptest.NewRequest("GET", "http://localhost:"+port+"info", nil)
 	recorder := httptest.NewRecorder()
 	if status := recorder.Code; status != http.StatusOK {
-        t.Errorf("GetInfo handler returned wrong status code: expected: %v actual: %v",
-            http.StatusOK, status)
-    }
+		t.Errorf("GetInfo handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
 	http.HandlerFunc(getInfo).ServeHTTP(recorder, request)
 	response := recorder.Body.String()
 	if len(response) == 0 {

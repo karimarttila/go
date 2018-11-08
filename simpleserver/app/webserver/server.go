@@ -12,18 +12,17 @@ import (
 )
 
 type InfoMessage struct {
-    Info   string      `json:"info"`
+	Info string `json:"info"`
 }
 
 //
 func JSONMarshalPreserveHTMLCharacters(t interface{}) ([]byte, error) {
-    buffer := &bytes.Buffer{}
-    encoder := json.NewEncoder(buffer)
-    encoder.SetEscapeHTML(false)
-    err := encoder.Encode(t)
-    return buffer.Bytes(), err
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
 }
-
 
 // /info API.
 func getInfo(writer http.ResponseWriter, request *http.Request) {
@@ -48,7 +47,7 @@ func handleRequests() {
 	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
-	log.Fatal(http.ListenAndServe(":" + util.MyConfig["port"], nil))
+	log.Fatal(http.ListenAndServe(":"+util.MyConfig["port"], nil))
 	util.LogExit()
 }
 
@@ -59,4 +58,3 @@ func StartServer() {
 	handleRequests()
 	util.LogExit()
 }
-

@@ -1,10 +1,8 @@
 package util
 
-
 import (
-    "testing"
+	"testing"
 )
-
 
 func TestLogger(t *testing.T) {
 	LogEnter()

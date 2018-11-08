@@ -19,6 +19,7 @@
 
 # Introduction
 
+It's really fun and interesting to learn a new programming language. When you have zero knowledge before taking the challenge learning the new language is a kind of exploration expedition to a new land with different language and customs - the only way to effectively learn it is to go there, learn the language and its idioms.
 
 # Learning Process
 
@@ -33,8 +34,6 @@ var MyLogger = initLogger()
 // NOTE: Use underscore '_' when you don't need to reference certain return values.
 pc, _, _, _ := runtime.Caller(1)
 ```
-
-It's really fun and interesting to learn a new computer program. When you have zero knowledge before taking the challenge learning the new language is a kind of exploration expedition to a new land with different language and customs - the only way to effectively learn it is to go for the expedition.
 
 # Go
 

@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"testing"

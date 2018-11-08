@@ -6,7 +6,6 @@ import (
 	"github.com/karimarttila/go/simpleserver/app/webserver"
 )
 
-
 // The main entry point to the file.
 // Just calls the webserver package to start the http server.
 func main() {

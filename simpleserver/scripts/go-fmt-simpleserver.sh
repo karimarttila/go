@@ -1,0 +1,3 @@
+#!/bin/bash
+
+go fmt github.com/karimarttila/go/simpleserver/app/...

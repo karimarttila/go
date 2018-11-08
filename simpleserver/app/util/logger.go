@@ -15,15 +15,14 @@ import (
 // NOTE: In production code report caller (Report_caller) is expensive and should be turned off.
 // Provides two helper methods for logging function entry and exit.
 
-
 var myLogFileHandle = initLogger()
 
-func initLogger() (*os.File) {
+func initLogger() *os.File {
 	fmt.Println("simpleserver.util.logger - initLogger - ENTER")
 	log.SetFlags(0)
 	filename := MyConfig["log_file"]
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-	0666)
+		0666)
 	if err == nil {
 		mw := io.MultiWriter(os.Stdout, file)
 		log.SetOutput(mw)
@@ -55,8 +54,7 @@ const (
 var MyLogLevel = initLogLevel()
 var MyReportCaller = initReportCaller()
 
-
-func initLogLevel() (SSLogLevel) {
+func initLogLevel() SSLogLevel {
 	fmt.Println("simpleserver.util.logger - initLogLevel - ENTER")
 	var myLogLevel SSLogLevel
 	switch MyConfig["log_level"] {
@@ -80,7 +78,7 @@ func initLogLevel() (SSLogLevel) {
 	return myLogLevel
 }
 
-func initReportCaller() (bool) {
+func initReportCaller() bool {
 	if MyConfig["report_caller"] == "true" {
 		return true
 	} else {
@@ -90,7 +88,7 @@ func initReportCaller() (bool) {
 
 // Provides string representation for log levels.
 func (level SSLogLevel) String() string {
-	levels := [...]string {
+	levels := [...]string{
 		"TRACE",
 		"DEBUG",
 		"INFO",
