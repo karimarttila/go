@@ -30,10 +30,10 @@ type RawProduct struct {
 }
 
 type Product struct {
-	PgId             int
-	PId              int
-	Title            string
-	Price            float64
+	PgId  int
+	PId   int
+	Title string
+	Price float64
 }
 
 type RawProducts struct {
@@ -42,13 +42,13 @@ type RawProducts struct {
 
 type Products struct {
 	ProductsList []Product `json:"product-groups"`
-	Ret string `json:"ret"`
+	Ret          string    `json:"ret"`
 }
 
 type DomainDb struct {
-	productGroups ProductGroups
+	productGroups  ProductGroups
 	rawProductsMap map[int]RawProducts
-	productsMap map[int]Products
+	productsMap    map[int]Products
 }
 
 func readCsvFile(csvFileName string) [][]string {
@@ -99,23 +99,22 @@ func readProducts(pgId int) (RawProducts, Products) {
 	for _, line := range lines {
 		// NOTE: Beware of shadowing pgId => that's why we have myPgId, not pgId (which is function parameter and the variable would shadow it, not a problem here but might be in certain cases).
 		myPgId, _ := strconv.Atoi(line[0])
-		myPId, _  := strconv.Atoi(line[1])
+		myPId, _ := strconv.Atoi(line[1])
 		myTitle := line[2]
 		myPrice, _ := strconv.ParseFloat(line[3], 64)
 		myAuthorOrDirector := line[4]
 		myYear, _ := strconv.Atoi(line[5])
 		myCountry := line[6]
 		myGenreOrLanguage := line[7]
-		rawProductsList[i] = RawProduct{myPgId, myPId, myTitle, myPrice, myAuthorOrDirector, myYear, myCountry, myGenreOrLanguage }
+		rawProductsList[i] = RawProduct{myPgId, myPId, myTitle, myPrice, myAuthorOrDirector, myYear, myCountry, myGenreOrLanguage}
 		productsList[i] = Product{myPId, myPId, myTitle, myPrice}
 		i++
 	}
-	rawProducts := RawProducts{ rawProductsList}
-	products := Products{ productsList, "ok"}
+	rawProducts := RawProducts{rawProductsList}
+	products := Products{productsList, "ok"}
 	util.LogExit()
 	return rawProducts, products
 }
-
 
 func initDomainDb() DomainDb {
 	util.LogEnter()

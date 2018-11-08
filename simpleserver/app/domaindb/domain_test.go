@@ -30,4 +30,3 @@ func TestGetProducts(t *testing.T) {
 		t.Errorf("There should be exactly 169 products in product group 2, got: %d", len(myProductsListPg_2))
 	}
 }
-
