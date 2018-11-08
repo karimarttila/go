@@ -98,8 +98,8 @@ func readProducts(pgId int) (RawProducts, Products) {
 	i := 0
 	for _, line := range lines {
 		// NOTE: Beware of shadowing pgId => that's why we have myPgId, not pgId (which is function parameter and the variable would shadow it, not a problem here but might be in certain cases).
-		myPgId, _ := strconv.Atoi(line[0])
-		myPId, _ := strconv.Atoi(line[1])
+		myPId, _ := strconv.Atoi(line[0])
+		myPgId, _ := strconv.Atoi(line[1])
 		myTitle := line[2]
 		myPrice, _ := strconv.ParseFloat(line[3], 64)
 		myAuthorOrDirector := line[4]
@@ -146,6 +146,23 @@ func GetProductGroups() ProductGroups {
 func GetProducts(pgId int) Products {
 	util.LogEnter()
 	ret := myDomainDB.productsMap[pgId]
+	util.LogExit()
+	return ret
+}
+
+// Gets product
+func GetProduct(pgId int, pId int) RawProduct {
+	util.LogEnter()
+	rawProductsMap := myDomainDB.rawProductsMap
+	rawProducts := rawProductsMap[pgId]
+	rawProductsList := rawProducts.RawProductsList
+	var ret RawProduct
+	for _, product := range rawProductsList {
+		if product.PId == pId {
+			ret = product
+			break
+		}
+	}
 	util.LogExit()
 	return ret
 }

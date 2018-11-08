@@ -26,7 +26,18 @@ func TestGetProducts(t *testing.T) {
 	if len(myProductsListPg_1) != 35 {
 		t.Errorf("There should be exactly 35 products in product group 1, got: %d", len(myProductsListPg_1))
 	}
-	if len(myProductsListPg_1) != 169 {
+	if len(myProductsListPg_2) != 169 {
 		t.Errorf("There should be exactly 169 products in product group 2, got: %d", len(myProductsListPg_2))
 	}
 }
+
+func TestGetProduct(t *testing.T) {
+	util.LogEnter()
+	// What a coincidence! The chosen movie is the best western of all times!
+	expectedTitle := "Once Upon a Time in the West"
+	rawProduct := GetProduct(2, 49)
+	if rawProduct.Title != expectedTitle {
+		t.Errorf("Didn't find expected product: expected: %s, got: %s", expectedTitle, rawProduct.Title)
+	}
+}
+

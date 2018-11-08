@@ -10,6 +10,7 @@
 - [Static Code Analysis](#static-code-analysis)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
+- [Map, Reduce and Filter](#map-reduce-and-filter)
 - [Test Performance Between Five Languages](#test-performance-between-five-languages)
 - [Go REPL](#go-repl)
 - [Logging](#logging)
@@ -143,6 +144,75 @@ Running tests is pretty nice since Go compiles really fast and starts the tests 
 # GoLand Debugger
 
 GoLand debugger is really good. Debugger starts immediately and is really fast. It's not a Lisp REPL but a pretty good second option. Go's data structures are pretty simple and GoLand debugger does a very good job presenting the data structures and values in the editor and in the variables window.
+
+
+# Map, Reduce and Filter
+
+There are no map, reduce and filter because Go is a statically typed language which does not provide generics - you either should have a dynamically typed language (like Clojure or Python) or a statically typed language with generics (like Java) to have real map, reduce and filter functions. I googled this a bit and found one of Go's inventors, Rob Pike's [filter](https://github.com/robpike/filter) implementation in which he says: 
+
+```text
+"I wanted to see how hard it was to implement this sort of thing in Go, with as nice an API as I could manage. It wasn't hard. Having written it a couple of years ago, I haven't had occasion to use it once. Instead, I just use "for" loops. You shouldn't use it either."
+```
+
+So, let's just use for loops while programming Go. This is a bit of a pity since map, reduce and filter are very idiomatic in functional languages like Clojure. 
+
+A couple of examples how to implement getProduct using filter in Java, Python, Javascript and Clojure, and for loop in Go:
+
+**Java**:
+
+```java
+List<Product> result = products.stream().filter(thisProduct ->
+        (thisProduct.pId == pId) && (thisProduct.pgId == pgId))
+        .collect(Collectors.toList());
+// There should be 0 or 1.
+if (result.size() == 1) {
+    product = result.get(0);
+}
+else {
+    logger.error("Didn't find exactly one product, count is: {}", result.size());
+}
+```
+
+**Python**:
+
+```python
+product = list(filter((lambda x: x[0] == str(p_id)), raw_products))
+ret = product[0] if (len(product) > 0) else None
+```
+
+**Javascript**:
+
+```javascript
+const filtered = rawProducts.filter(row => row[0] === `${pId}` && row[1] === `${pgId}`);
+const product = filtered[0];
+```
+
+**Clojure**:
+
+```clojure
+(let [products (-get-raw-products pg-id)]
+  (first (filter (fn [item]
+                   (let [id (first item)]
+                     (= id (str p-id))))
+                 products))))
+```
+
+**Go**:
+
+```go
+for _, product := range rawProductsList {
+	if product.PId == pId {
+		ret = product
+		break
+	}
+}
+```
+
+Once again: Java is verbose, Python is concise, Clojure is elegant and Go is very C-like. I spent some time browsing those five implementations and I realized something. I have done so much Java production code that error handling comes from the spine. For some languages in this exercise I didn't bother that much to do error handling (e.g. the Javascript implementation above in which we should test if filtered has exactly one item or not (as in the Java implementation)). Well, this was just an exercise. Maybe I'll do a code review for myself later on with all these five implementations and fix error handling in all of them.
+
+Another interesting observation is that how the language drives the thinking in implementation. In other languages I have created this idea of raw products (all 8 fields per product, versus the actual product which has only the 4 fields needed when returning the product list), but for Java I have created just the Product class which has all 8 fields. Weird, I need to look into that later on when I have more time. All implementations provide the exact same API, though. I even used the Simple Frontend to test all Simple Frontend implementations that session handling works the same way and all pages (product groups, products list and product) look the same.
+
+Maybe I'll also create a blog post later on in which I'll compare the differences in those five languages a bit deeper. Might be pretty interesting when all those implementations are fresh in my memory.
 
 
 # Test Performance Between Five Languages
