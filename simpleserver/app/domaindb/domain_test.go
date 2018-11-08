@@ -17,12 +17,17 @@ func TestGetProductGroups(t *testing.T) {
 	}
 }
 
-//func TestGetProducts(t *testing.T) {
-//	util.LogEnter()
-//	myProducts := GetProducts(1)
-//	myProductsList := myProducts.ProductsList
-//	if len(myProductsList) != 2 {
-//		t.Errorf("There should be exactly 2 products in product group 1, got: %d", len(myProductsList))
-//	}
-//}
+func TestGetProducts(t *testing.T) {
+	util.LogEnter()
+	myProductsPg_1 := GetProducts(1)
+	myProductsPg_2 := GetProducts(2)
+	myProductsListPg_1 := myProductsPg_1.ProductsList
+	myProductsListPg_2 := myProductsPg_2.ProductsList
+	if len(myProductsListPg_1) != 35 {
+		t.Errorf("There should be exactly 35 products in product group 1, got: %d", len(myProductsListPg_1))
+	}
+	if len(myProductsListPg_1) != 169 {
+		t.Errorf("There should be exactly 169 products in product group 2, got: %d", len(myProductsListPg_2))
+	}
+}
 

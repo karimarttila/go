@@ -7,7 +7,10 @@
 - [Go](#go)
 - [GoLand](#goland)
 - [Go Code Format](#go-code-format)
+- [Static Code Analysis](#static-code-analysis)
 - [Testing](#testing)
+- [GoLand Debugger](#goland-debugger)
+- [Test Performance Between Five Languages](#test-performance-between-five-languages)
 - [Go REPL](#go-repl)
 - [Logging](#logging)
 - [Readability](#readability)
@@ -85,13 +88,67 @@ You can reformat the Simple Server code using the following command in the $GOPA
 go fmt github.com/karimarttila/go/simpleserver
 ```
 
+I also provided a script [go-fmt-simpleserver.sh](https://github.com/karimarttila/go/tree/master/simpleserver/scripts) to run the fmt code formatter to all Simple Server Go files. It's a good idea to run this script every once in a while to keep the Go code formatting clean.
+
+
+# Static Code Analysis
+
+Go provides a simple static code analysis tool in the standard Go toolbox: [vet](https://golang.org/cmd/vet/). You can run the static code analysis using command: 
+
+```bash
+go vet github.com/karimarttila/go/simpleserver/...
+```
+
+I also found another interesting tool: [Staticcheck](https://staticcheck.io/docs/). Install the package and you can run staticcheck, gosimple and unused in one go for all Go code base files:
+
+```bash
+megacheck github.com/karimarttila/go/simpleserver/app/...
+```
+
+Staticcheck open source version is free. If you find the tool useful you should consider buying the commercial version. 
 
 
 # Testing
 
-TODO
+Go is pretty amazing in that sense that you have also [the Go testing framework](https://golang.org/pkg/testing/) in the standard library.
 
-Some performance aspects of tests:
+Go tests are pretty easy to create. You don't have asserts but instead you just write standard application logic to test whether your package works as expected. Example:
+
+```go
+func TestGetProductGroups(t *testing.T) {
+	util.LogEnter()
+	myProductGroups := GetProductGroups()
+	myPGMap := myProductGroups.ProductGroupsMap
+	if len(myPGMap) != 2 {
+		t.Errorf("There should be exactly two product groups, got: %d", len(myPGMap))
+	}
+	if myPGMap["1"] != "Books" || myPGMap["2"] != "Movies" {
+		t.Errorf("There were wrong values for product groups: %s", myPGMap)
+	}
+}
+```
+
+You can run all tests in command line using command (TODO: update when all tests have been implemented):
+
+```bash
+go test github.com/karimarttila/go/simpleserver/...
+ok  	github.com/karimarttila/go/simpleserver/app/domaindb	0.002s
+ok  	github.com/karimarttila/go/simpleserver/app/main	0.003s
+ok  	github.com/karimarttila/go/simpleserver/app/util	0.003s
+ok  	github.com/karimarttila/go/simpleserver/app/webserver	0.002s
+```
+
+Running tests is pretty nice since Go compiles really fast and starts the tests immediately.
+
+# GoLand Debugger
+
+GoLand debugger is really good. Debugger starts immediately and is really fast. It's not a Lisp REPL but a pretty good second option. Go's data structures are pretty simple and GoLand debugger does a very good job presenting the data structures and values in the editor and in the variables window.
+
+
+# Test Performance Between Five Languages
+
+All right! Finally my journey travelling through five language lands is over and I can compare the languages. Let's compare the test performance between the languages.
+
 
 **Clojure**:
 

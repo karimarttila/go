@@ -86,24 +86,28 @@ func readProductGroups() ProductGroups {
 	return productGroups
 }
 
+// NOTE: We skip testing of all numeric/alpha conversions.
+// In real production code we should handle all these error conditions, of course.
+// But since this is an exercise, let's skip that part at least for now.
 func readProducts(pgId int) (RawProducts, Products) {
 	util.LogEnter()
-	lines := readCsvFile("pg-" + strconv.Itoa(pgId) + "-productsproduct-groups.csv")
+	lines := readCsvFile("pg-" + strconv.Itoa(pgId) + "-products.csv")
 	count := len(lines)
 	rawProductsList := make([]RawProduct, count)
 	productsList := make([]Product, count)
 	i := 0
 	for _, line := range lines {
-		pgId, _ := strconv.Atoi(line[0])
-		pId, _  := strconv.Atoi(line[1])
-		title := line[2]
-		price, _ := strconv.ParseFloat(line[3], 64)
-		authorOrDirector := line[4]
-		year, _ := strconv.Atoi(line[5])
-		country := line[6]
-		genreOrLanguage := line[7]
-		rawProductsList[i] = RawProduct{pgId, pId, title, price, authorOrDirector, year, country, genreOrLanguage }
-		productsList[i] = Product{pgId, pId, title, price}
+		// NOTE: Beware of shadowing pgId => that's why we have myPgId, not pgId (which is function parameter and the variable would shadow it, not a problem here but might be in certain cases).
+		myPgId, _ := strconv.Atoi(line[0])
+		myPId, _  := strconv.Atoi(line[1])
+		myTitle := line[2]
+		myPrice, _ := strconv.ParseFloat(line[3], 64)
+		myAuthorOrDirector := line[4]
+		myYear, _ := strconv.Atoi(line[5])
+		myCountry := line[6]
+		myGenreOrLanguage := line[7]
+		rawProductsList[i] = RawProduct{myPgId, myPId, myTitle, myPrice, myAuthorOrDirector, myYear, myCountry, myGenreOrLanguage }
+		productsList[i] = Product{myPId, myPId, myTitle, myPrice}
 		i++
 	}
 	rawProducts := RawProducts{ rawProductsList}
@@ -117,14 +121,13 @@ func initDomainDb() DomainDb {
 	util.LogEnter()
 	myProductGroups := readProductGroups()
 	pgMap := myProductGroups.ProductGroupsMap
-	pgKeys := make([]string, len(pgMap))
 	rawProductsMap := make(map[int]RawProducts)
 	productsMap := make(map[int]Products)
-	for i := range pgKeys {
-		pgId, _ := strconv.Atoi(pgKeys[i])
+	for key, _ := range pgMap {
+		pgId, _ := strconv.Atoi(key)
 		rawProducts, products := readProducts(pgId)
-		rawProductsMap[i] = rawProducts
-		productsMap[i] = products
+		rawProductsMap[pgId] = rawProducts
+		productsMap[pgId] = products
 	}
 	ret := DomainDb{
 		productGroups: myProductGroups, rawProductsMap: rawProductsMap, productsMap: productsMap}
