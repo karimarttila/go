@@ -6,7 +6,7 @@
 - [Learning Process](#learning-process)
 - [Go](#go)
 - [GoLand](#goland)
-- [Go Code Format](#go-code-format)
+- [Code Format](#code-format)
 - [Static Code Analysis](#static-code-analysis)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
@@ -79,7 +79,7 @@ I use [GoLand](https://www.jetbrains.com/go/)
 I use [IntelliJ IDEA](https://www.jetbrains.com/idea/) for Java programming, [PyCharm](https://www.jetbrains.com/pycharm) for Python programming and IntelliJ IDEA with [Cursive](https://cursive-ide.com/) plugin for Clojure programming. Since GoLand, PyCharm and IDEA are provided by the same company (JetBrains) they provide very similar look-and-feel. So, there are a lot of synergy benefits to use the same IDE for several programming languages.
 
 
-# Go Code Format
+# Code Format
 
 Go is an interesting language in that sense that format of the Go code is very opinionated. Very opinionated in that sense that the Go compiler even requests code to be in certain format or it doesn't compile the code even though it would be syntacally right. Formatting of the Go code is build into the language (see: [format](https://golang.org/pkg/go/format/)).
 
@@ -148,13 +148,13 @@ GoLand debugger is really good. Debugger starts immediately and is really fast. 
 
 # Map, Reduce and Filter
 
-There are no map, reduce and filter because Go is a statically typed language which does not provide generics - you either should have a dynamically typed language (like Clojure or Python) or a statically typed language with generics (like Java) to have real map, reduce and filter functions. I googled this a bit and found one of Go's inventors, Rob Pike's [filter](https://github.com/robpike/filter) implementation in which he says: 
+There are no map, reduce and filter implementations in the Go standard library because Go is a statically typed language which does not provide generics - you either should have a dynamically typed language (like Clojure, Javascript or Python) or a statically typed language with generics (like Java) to have real map, reduce and filter functions. I googled this a bit and found one of Go's inventors, Rob Pike's [filter](https://github.com/robpike/filter) implementation in which he says: 
 
 ```text
 "I wanted to see how hard it was to implement this sort of thing in Go, with as nice an API as I could manage. It wasn't hard. Having written it a couple of years ago, I haven't had occasion to use it once. Instead, I just use "for" loops. You shouldn't use it either."
 ```
 
-So, let's just use for loops while programming Go. This is a bit of a pity since map, reduce and filter are very idiomatic in functional languages like Clojure. 
+So, let's just use for loops while programming Go. This is a bit of a pity since map, reduce and filter are very idiomatic e.g. in functional languages like Clojure. But you just have to accept that when in Rome do as the Romans do. 
 
 A couple of examples how to implement getProduct using filter in Java, Python, Javascript and Clojure, and for loop in Go:
 
@@ -208,7 +208,7 @@ for _, product := range rawProductsList {
 }
 ```
 
-Once again: Java is verbose, Python is concise, Clojure is elegant and Go is very C-like. I spent some time browsing those five implementations and I realized something. I have done so much Java production code that error handling comes from the spine. For some languages in this exercise I didn't bother that much to do error handling (e.g. the Javascript implementation above in which we should test if filtered has exactly one item or not (as in the Java implementation)). Well, this was just an exercise. Maybe I'll do a code review for myself later on with all these five implementations and fix error handling in all of them.
+Once again: Java is verbose, Python and Javascript are concise, Clojure is elegant and Go is very C-like. I spent some time browsing those five implementations and I realized something. I have done so much production code in Java that error handling comes from the spine. For some languages in this exercise I didn't bother that much to do error handling (e.g. the Javascript implementation above in which we should test if filtered has exactly one item or not (as in the Java implementation)). Well, this was just an exercise. Maybe I'll do a code review for myself later on with all these five implementations and fix error handling in all of them.
 
 Another interesting observation is that how the language drives the thinking in implementation. In other languages I have created this idea of raw products (all 8 fields per product, versus the actual product which has only the 4 fields needed when returning the product list), but for Java I have created just the Product class which has all 8 fields. Weird, I need to look into that later on when I have more time. All implementations provide the exact same API, though. I even used the Simple Frontend to test all Simple Frontend implementations that session handling works the same way and all pages (product groups, products list and product) look the same.
 

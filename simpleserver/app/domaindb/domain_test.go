@@ -15,6 +15,7 @@ func TestGetProductGroups(t *testing.T) {
 	if myPGMap["1"] != "Books" || myPGMap["2"] != "Movies" {
 		t.Errorf("There were wrong values for product groups: %s", myPGMap)
 	}
+	util.LogExit()
 }
 
 func TestGetProducts(t *testing.T) {
@@ -29,6 +30,7 @@ func TestGetProducts(t *testing.T) {
 	if len(myProductsListPg_2) != 169 {
 		t.Errorf("There should be exactly 169 products in product group 2, got: %d", len(myProductsListPg_2))
 	}
+	util.LogExit()
 }
 
 func TestGetProduct(t *testing.T) {
@@ -39,5 +41,6 @@ func TestGetProduct(t *testing.T) {
 	if rawProduct.Title != expectedTitle {
 		t.Errorf("Didn't find expected product: expected: %s, got: %s", expectedTitle, rawProduct.Title)
 	}
+	util.LogExit()
 }
 
