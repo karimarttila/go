@@ -122,7 +122,7 @@ func initDomainDb() DomainDb {
 	pgMap := myProductGroups.ProductGroupsMap
 	rawProductsMap := make(map[int]RawProducts)
 	productsMap := make(map[int]Products)
-	for key, _ := range pgMap {
+	for key := range pgMap {
 		pgId, _ := strconv.Atoi(key)
 		rawProducts, products := readProducts(pgId)
 		rawProductsMap[pgId] = rawProducts
