@@ -1,6 +1,5 @@
 package userdb
 
-
 import (
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"strconv"
@@ -35,7 +34,6 @@ func TestAddUser(t *testing.T) {
 	util.LogExit()
 }
 
-
 func TestCheckCredentials(t *testing.T) {
 	util.LogEnter()
 	response := checkCredentials("kari.karttinen@foo.com", "Kari")
@@ -54,5 +52,3 @@ func TestCheckCredentials(t *testing.T) {
 	}
 	util.LogExit()
 }
-
-

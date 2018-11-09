@@ -43,4 +43,3 @@ func TestGetProduct(t *testing.T) {
 	}
 	util.LogExit()
 }
-
