@@ -8,6 +8,7 @@
 - [GoLand](#goland)
 - [Code Format](#code-format)
 - [Static Code Analysis](#static-code-analysis)
+- [JSON Web Token](#json-web-token)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
 - [Map, Reduce and Filter](#map-reduce-and-filter)
@@ -24,6 +25,13 @@
 # Introduction
 
 It's really fun and interesting to learn a new programming language. When you have zero knowledge before taking the challenge learning the new language is a kind of exploration expedition to a new land with different language and customs - the only way to effectively learn it is to go there, learn the language and its idioms.
+
+So, Go (or 'golang' for search engine friendliness) is my fifth language I'm implementing the Simple Server. The previous versions are:
+
+- [Clojure](https://github.com/karimarttila/clojure/tree/master/clj-ring-cljs-reagent-demo/simple-server)
+- [Javascript/Node](https://github.com/karimarttila/javascript/tree/master/webstore-demo/simple-server)
+- [Java](https://github.com/karimarttila/java/tree/master/webstore-demo/simple-server)
+- [Python](https://github.com/karimarttila/python/tree/master/webstore-demo/simple-server)
 
 # Learning Process
 
@@ -107,6 +115,10 @@ megacheck github.com/karimarttila/go/simpleserver/app/...
 ```
 
 Staticcheck open source version is free. If you find the tool useful you should consider buying the commercial version. 
+
+# JSON Web Token
+
+Damn, I need one dependency, after all. I was hoping I could implement the Simple Server just using Go standard library but there is no JSON Web Token manipulation in the Go standard library and I really don't want to implement some poor JSON Web Token library myself for this project. So, I'm using [jwt-go](https://github.com/dgrijalva/jwt-go). Sorry, Tuomo. 
 
 
 # Testing
