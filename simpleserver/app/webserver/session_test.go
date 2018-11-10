@@ -1,6 +1,5 @@
 package webserver
 
-
 import (
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"testing"
@@ -32,4 +31,3 @@ func TestJsonWebToken(t *testing.T) {
 	}
 	util.LogExit()
 }
-

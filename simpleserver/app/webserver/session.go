@@ -18,7 +18,7 @@ type SSClaim struct {
 
 type TokenResponse struct {
 	Ready bool
-	Email          string    `json:"email"`
+	Email string `json:"email"`
 }
 
 // NOTE: Go does not have native set. We use map to simulate set.
@@ -33,12 +33,12 @@ func CreateJsonWebToken(userEmail string) (ret string, err error) {
 	if err != nil {
 		util.LogError("Error converting json_web_token_expiration_as_seconds: " + expStr)
 	} else {
-		ttl :=  time.Duration(expiration) * time.Second
+		ttl := time.Duration(expiration) * time.Second
 		claimExp := time.Now().UTC().Add(ttl).Unix()
 
-		myClaim := SSClaim {
+		myClaim := SSClaim{
 			userEmail,
-			jwt.StandardClaims {
+			jwt.StandardClaims{
 				ExpiresAt: int64(claimExp),
 			},
 		}
