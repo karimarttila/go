@@ -20,6 +20,7 @@
 - [Productivity](#productivity)
 - [Lines of Code](#lines-of-code)
 - [Performance](#performance)
+- [Go vs Java](#go-vs-java)
 - [Conclusions](#conclusions)
 
 
@@ -503,8 +504,28 @@ TODO: Comment.
 
 TODO
 
+# Go vs Java
+
+Go is so much better that Java in many ways:
+- Go compiles to bare metal - Java compiles to byte code which you run in a JVM - overhead.
+- Go's error handling is simpler.
+- Go is much more concise than Java - code is easier to handle.
+- In Go no class hell - in Java you realize that you are creating class this and class that all the time.
+
+TODO: Examples here.
+
+
 
 
 # Conclusions
+
+I fell in love with Go. Go is really a very concise and productive language if you need a robust and performant statically typed language with excellent concurrency support. Much better than Java which compared to Go is verbose, non-productive and concurrency support is far behind Go. I have done quite a lot of C++ and Java programming and I must say that Go's error handling with idiomatic error entity as paired with the actual return value from functions is really great and simple. Go is definitely going to be my choice of statically typed language in my future projects. But still, if I need to create a quick script, e.g. a surrogate script for handling aws cli calls and process return json - I will choose Python. And if I need to process a lot of data - Clojure. But when you need statically typed language and excellent performance with great concurrency support - Go. 
+
+I started my programming career with C. Hacking Go is a bit like coming home, except you don't need to be meticulous with memory allocation / deallocation. I think Go gives all goodies from C programming but takes care of the heavy lifting of what's difficult in C. Go code is really simple and elegant - the language provides the exact support for those things that you really need and doesn't add anything extra to the language (like Einstein put it: "Everything should be made as simple as possible, but not simpler").
+
+The feeling was actually quite amazing. I started my Go hacking with practically zero Go knowledge on Monday, and on Saturday I felt like all pieces of the puzzle just locked in to the right places and creating code was really fluent and easy. 
+
+
+
 
 TODO

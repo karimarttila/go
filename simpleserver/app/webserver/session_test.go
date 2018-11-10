@@ -22,7 +22,7 @@ func TestJsonWebToken(t *testing.T) {
 	if err != nil {
 		t.Error("ValidateJsonWebToken returned error: " + err.Error())
 	}
-	if !response.Ready {
+	if !response.Flag {
 		t.Error("Couldn't validate token")
 	}
 	gotEmail := response.Email

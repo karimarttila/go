@@ -23,13 +23,16 @@ func TestEmailAlreadyExists(t *testing.T) {
 
 func TestAddUser(t *testing.T) {
 	util.LogEnter()
-	response := AddUser("kari.karttinen@foo.com", "Kari", "Karttinen", "Kari")
-	if response.ret != "failed" {
+	response, err := AddUser("kari.karttinen@foo.com", "Kari", "Karttinen", "Kari")
+	if err == nil {
 		t.Errorf("Adding user kari.karttinen@foo.com should have failed since it is in the user DB, response: %s", response)
 	}
-	response = AddUser("jamppa.jamppanen@foo.com", "Jamppa", "Jamppanen", "JampanSalasana")
-	if response.ret != "ok" {
+	response, err = AddUser("jamppa.jamppanen@foo.com", "Jamppa", "Jamppanen", "JampanSalasana")
+	if err != nil {
 		t.Errorf("Adding user jamppa.jamppanen@foo.com should have succeeded, response: %s", response)
+	}
+	if response.Ret != "ok" {
+		t.Errorf("ret was something else than ok: %s", response.Ret)
 	}
 	util.LogExit()
 }

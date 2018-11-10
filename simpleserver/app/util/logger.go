@@ -108,6 +108,8 @@ func logIt(msg string, level SSLogLevel) {
 	var timeStamp = fmt.Sprint(time.Now().UTC().Format("2006-01-02T15:04:05.999Z"))
 	if level >= MyLogLevel {
 		if MyReportCaller {
+			// NOTE: Skips just two stacks. I.e. if function A calls function B,
+			// and both log, then both log entries show just A as caller.
 			pc, _, _, _ := runtime.Caller(2)
 			fn := runtime.FuncForPC(pc)
 			caller = fn.Name()

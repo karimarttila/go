@@ -1,6 +1,7 @@
 package userdb
 
 import (
+	"errors"
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"hash/fnv"
 	"strconv"
@@ -15,9 +16,8 @@ type User struct {
 }
 
 type AddUserResponse struct {
-	ret   string
-	email string
-	msg   string
+	Ret   string
+	Email string
 }
 
 type UsersDb struct {
@@ -74,20 +74,20 @@ func EmailAlreadyExists(givenEmail string) bool {
 	return ret
 }
 
-func AddUser(email string, firstName string, lastName string, password string) AddUserResponse {
+func AddUser(email string, firstName string, lastName string, password string) (ret AddUserResponse, err error) {
 	util.LogEnter()
-	var ret AddUserResponse
 	if EmailAlreadyExists(email) {
-		util.LogWarn("Email already exists: " + email)
-		ret = AddUserResponse{"failed", email, "Email already exists"}
+		buf := "Email already exists: " + email
+		util.LogWarn(buf)
+		err = errors.New(buf)
 	} else {
 		id := nextId()
 		newUser := User{id, email, firstName, lastName, hashString(password)}
 		myUsersDB.usersMap[id] = newUser
-		ret = AddUserResponse{"ok", email, ""}
+		ret = AddUserResponse{"ok", email}
 	}
 	util.LogExit()
-	return ret
+	return ret, err
 }
 
 func checkCredentials(userEmail string, userPassword string) bool {

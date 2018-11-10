@@ -17,7 +17,7 @@ type SSClaim struct {
 }
 
 type TokenResponse struct {
-	Ready bool
+	Flag bool // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
 	Email string `json:"email"`
 }
 
