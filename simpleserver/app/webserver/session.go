@@ -24,8 +24,6 @@ type TokenResponse struct {
 // NOTE: Go does not have native set. We use map to simulate set.
 var mySessions = make(map[string]bool)
 
-// ************ TODO: CHECK THAT ExpiresAt is seconds or time!!!!!!!!!
-
 func CreateJsonWebToken(userEmail string) (ret string, err error) {
 	util.LogEnter()
 	expStr := util.MyConfig["json_web_token_expiration_as_seconds"]
@@ -53,6 +51,15 @@ func CreateJsonWebToken(userEmail string) (ret string, err error) {
 	return ret, err
 }
 
+func validationErrorHandler(msg string, token string) (err error) {
+	util.LogEnter()
+	util.LogError(msg)
+	err = errors.New(msg)
+	delete(mySessions, token)
+	util.LogExit()
+	return err
+}
+
 // Validates the token. Returns {:email :exp} from token if session ok, None otherwise.
 // Token validation has two parts:
 // 1. Check that we actually created the token in the first place (should find it in my-sessions set.
@@ -64,8 +71,7 @@ func ValidateJsonWebToken(myToken string) (ret TokenResponse, err error) {
 	// Validation #1.
 	if _, ok := mySessions[myToken]; !ok {
 		buf = "Token not found in sessions: " + myToken
-		util.LogWarn(buf)
-		err = errors.New(buf)
+		err = validationErrorHandler(buf, myToken)
 	} else {
 		// Validation #2.
 		parsedToken, err = jwt.Parse(myToken, func(token *jwt.Token) (interface{}, error) {
@@ -77,20 +83,17 @@ func ValidateJsonWebToken(myToken string) (ret TokenResponse, err error) {
 			claim, ok := parsedToken.Claims.(jwt.MapClaims) // ; ok && token.Valid
 			if !ok {
 				buf = "Couldn't parse token, Claims returned false"
-				util.LogError(buf)
-				err = errors.New(buf)
+				err = validationErrorHandler(buf, myToken)
 			} else {
 				if !parsedToken.Valid {
 					buf = "Token was not valid, parsedToken.Valid is false"
-					util.LogError(buf)
-					err = errors.New(buf)
+					err = validationErrorHandler(buf, myToken)
 				} else {
 					userEmail := claim["email"]
 					userEmailStr, ok := userEmail.(string)
 					if !ok {
 						buf = "Couldn't convert userEmail to string"
-						util.LogError(buf)
-						err = errors.New(buf)
+						err = validationErrorHandler(buf, myToken)
 					} else {
 						ret = TokenResponse{true, userEmailStr}
 					}
