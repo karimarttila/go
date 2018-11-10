@@ -23,13 +23,13 @@ type SigninData struct {
 }
 
 type ErrorResponse struct {
-	Flag bool `json:"-"` // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
+	Flag bool   `json:"-"` // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
 	Ret  string `json:"ret"`
 	Msg  string `json:"msg"`
 }
 
 type SigninResponse struct {
-	Flag  bool `json:"-"`
+	Flag  bool   `json:"-"`
 	Ret   string `json:"ret"`
 	Email string `json:"email"`
 }
