@@ -35,7 +35,6 @@ func CreateJsonWebToken(userEmail string) (ret string, err error) {
 	} else {
 		ttl := time.Duration(expiration) * time.Second
 		claimExp := time.Now().UTC().Add(ttl).Unix()
-
 		myClaim := SSClaim{
 			userEmail,
 			jwt.StandardClaims{

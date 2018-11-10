@@ -9,6 +9,7 @@
 - [Code Format](#code-format)
 - [Static Code Analysis](#static-code-analysis)
 - [JSON Web Token](#json-web-token)
+- [Error handling](#error-handling)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
 - [Map, Reduce and Filter](#map-reduce-and-filter)
@@ -119,6 +120,91 @@ Staticcheck open source version is free. If you find the tool useful you should 
 # JSON Web Token
 
 Damn, I need one dependency, after all. I was hoping I could implement the Simple Server just using Go standard library but there is no JSON Web Token manipulation in the Go standard library and I really don't want to implement some poor JSON Web Token library myself for this project. So, I'm using [jwt-go](https://github.com/dgrijalva/jwt-go). Sorry, Tuomo. 
+
+# Error handling
+
+I kind of like Go's error handling. I have done production software with C some 20 years ago and you always had to be pretty carefull with returned error codes. In C++ you could define exceptions and throwing and catching them which kind of simplified error handling but also with a certain price. Java adopted the exception strategy but divided exceptions to runtime exceptions which you didn't have to explicitely handle and checked exceptions which you had to explicitely handle - many consider this a failed experiment since e.g. Spring exclusively uses just runtime exceptions. Go has a different strategy. There are no exceptions in the language but you can return many return values. An idiomatic way is to return the actual return value and an error - if there are no errors error value is nill, if there were errors the error value provides indication of the error. This is kind of nice but once again comes with a price - makes the error handling more explicit but creates more manual work for the programmer to handle errors.
+
+Example:
+
+```go
+func CreateJsonWebToken(userEmail string) (ret string, err error) {
+	util.LogEnter()
+	expStr := util.MyConfig["json_web_token_expiration_as_seconds"]
+	expiration, err := strconv.Atoi(expStr)
+	if err != nil {
+		util.LogError("Error converting json_web_token_expiration_as_seconds: " + expStr)
+	} else {
+		ttl := time.Duration(expiration) * time.Second
+		claimExp := time.Now().UTC().Add(ttl).Unix()
+		myClaim := SSClaim{
+			userEmail,
+			jwt.StandardClaims{
+				ExpiresAt: int64(claimExp),
+			},
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, myClaim)
+		ret, err = token.SignedString(superSecret)
+		if err != nil {
+			util.LogError("error signing json web token: " + err.Error())
+		} else {
+			mySessions[ret] = true
+		}
+	}
+	util.LogExit()
+	return ret, err
+}
+... and the test class:
+func TestJsonWebToken(t *testing.T) {
+	util.LogEnter()
+	testEmail := "kari.karttinen@foo.com"
+	jsonWebToken, err := CreateJsonWebToken(testEmail)
+	if err != nil {
+		t.Error("CreateJsonWebToken returned error: " + err.Error())
+	}
+...
+```
+
+Some Go programmers immediately recognize that you could make the else branches mostly disappear just returning the error when you encounter one. I'm a bit of an old school programmer and I don't like to have many return points in my functions - I myself like the way in which the functionality goes to the end of the function and only there is the return point of the function.
+
+Just out of curiosity, let's compare this to the version in which we return immediately when we encounter an error:
+
+```go
+func CreateJsonWebToken(userEmail string) (ret string, err error) {
+	util.LogEnter()
+	expStr := util.MyConfig["json_web_token_expiration_as_seconds"]
+	expiration, err := strconv.Atoi(expStr)
+	if err != nil {
+		util.LogError("Error converting json_web_token_expiration_as_seconds: " + expStr)
+		util.LogExit()		
+		return ret, err
+	}
+	ttl := time.Duration(expiration) * time.Second
+	claimExp := time.Now().UTC().Add(ttl).Unix()
+	myClaim := SSClaim{
+		userEmail,
+		jwt.StandardClaims{
+			ExpiresAt: int64(claimExp),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, myClaim)
+	ret, err = token.SignedString(superSecret)
+	if err != nil {
+		util.LogError("error signing json web token: " + err.Error())
+		util.LogExit()
+		return ret, err
+	}
+	mySessions[ret] = true
+	util.LogExit()
+	return ret, err
+}
+```
+
+Ok. We got out of the else branches, but we introduced some extra mental burden when we have to remember that we now can exit from the function from many points. E.g. I like to see in my debug log every function entry and exit - now we have to remember to add the LogExit to every place we return from the function. Also this is a bad practice if you have allocated some resources in the beginning of the function and you need to deallocate the resources before exiting the function - now you have to remember to deallocate the resource in many points. So, I guess I keep my old habits. 
+
+The latter version has 28 lines and my preferred version has only 26 lines - so after all we didn't even save any lines.
+
+And what does say one of my programming gurus about this? Let's take McConnell's Code Complete ed. 2 from by book shelf and search the relevant chapter (17.1): "**Minimize the number of returns in each routine**. It’s harder to understand a routine when, reading it at the bottom, you’re unaware of the possibility that it returned somewhere above. For that reason, use returns judiciously - only when they improve readability." 
 
 
 # Testing
