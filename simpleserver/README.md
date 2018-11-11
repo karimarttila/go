@@ -15,7 +15,7 @@
 - [GoLand Debugger](#goland-debugger)
 - [Map, Reduce and Filter](#map-reduce-and-filter)
 - [Test Performance Between Five Languages](#test-performance-between-five-languages)
-- [Go REPL](#go-repl)
+- [Go Playground](#go-playground)
 - [Logging](#logging)
 - [Readability](#readability)
 - [Productivity](#productivity)
@@ -83,7 +83,7 @@ And so we finalized our short tour to "Go and package management."
 
 # GoLand
 
-I use [GoLand](https://www.jetbrains.com/go/) as my Go IDE.
+I used [GoLand](https://www.jetbrains.com/go/) as my Go IDE.
 
 I use [IntelliJ IDEA](https://www.jetbrains.com/idea/) for Java programming, [PyCharm](https://www.jetbrains.com/pycharm) for Python programming and IntelliJ IDEA with [Cursive](https://cursive-ide.com/) plugin for Clojure programming. Since GoLand, PyCharm and IDEA are provided by the same company (JetBrains) they provide very similar look-and-feel. So, there are a lot of synergy benefits to use the same IDE for several programming languages.
 
@@ -563,7 +563,14 @@ sys	0m0.039s
 **Go**:
 
 ```bash
-time ./run-go-tests.sh 
+TODO: UPDATE WHEN ALL TESTS ARE IMPLEMENTED ***************
+time GOCACHE=off scripts/go-test-simpleserver.sh
+ok  	github.com/karimarttila/go/simpleserver/app/domaindb	0.007s
+ok  	github.com/karimarttila/go/simpleserver/app/main	0.003s
+ok  	github.com/karimarttila/go/simpleserver/app/userdb	0.003s
+ok  	github.com/karimarttila/go/simpleserver/app/util	0.006s
+ok  	github.com/karimarttila/go/simpleserver/app/webserver	0.006s
+real	0m2.191s
 ```
 
 **The results are:**
@@ -579,9 +586,11 @@ time ./run-go-tests.sh
 It's pretty obvious that Clojure and Java lose the contest because of the loading of JVM. TODO: Comment regarding Go.
 
 
-# Go REPL
+# Go Playground
 
-TODO
+There is no REPL in Go (very difficult to make for a statically typed language - it took some 20 years before we got some sort of very simple REPL for Java]).
+
+But there is some sort of workaround: [Go Playground](https://play.golang.org/). Gophers have created various examples in the Playground and you can try to google them. Example: [How to use map of maps](https://play.golang.org/p/pQsoB02pDl).
 
 
 # Logging
@@ -622,8 +631,6 @@ Thanks Tuomo for being stringent with my Go studies!
 
 # Readability
 
-TODO
-
 Let's use Python and Go implementations as an examples of readability of those languages (you can check equivalent examples of Javascript, Java and Clojure in my previous blog posts, see links in the beginning of this article):
 
 
@@ -655,16 +662,82 @@ def test_get_product_groups(client):
 **Go**:
 
 ```go
-TODO
+func TestGetProductGroups(t *testing.T) {
+	util.LogEnter()
+	port := util.MyConfig["port"]
+	token, err := getTestToken(t)
+	if err != nil {
+		t.Errorf("Failed to get test token: %s", err.Error())
+	}
+	util.LogTrace("Test token: " + token)
+	encoded := base64.StdEncoding.EncodeToString([]byte(token))
+	if err != nil {
+		t.Errorf("Failed to base64 decode token: %s", err.Error())
+	}
+	//NOTE: We actually call directly the handler.
+	// See below: "http.HandlerFunc(getInfo)...."
+	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product-groups", nil)
+	request.Header.Add("authorization", "Basic "+encoded)
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getProductGroups).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("getProductGroups handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	response := recorder.Body.String()
+	if len(response) == 0 {
+		t.Error("Response was nil or empty")
+	}
+	// NOTE: Might look a bit weird, but it's pretty straightforward:
+	// pgMap is a map (key:string), and values are maps, which keys are strings and values are strings.
+	pgMap := make(map[string]map[string]string)
+	err = json.Unmarshal([]byte(response), &pgMap)
+	if err != nil {
+		t.Errorf("Unmarshalling response failed: %s", err.Error())
+	}
+	pg, ok := pgMap["product-groups"]
+	if !ok {
+		t.Errorf("Didn't find 'product-groups' in response")
+	}
+	pg1, ok := pg["1"]
+	if !ok {
+		t.Errorf("Didn't find product group 1 in response")
+	}
+	if pg1 != "Books" {
+		t.Errorf("Product group 1 should have been 'Books'")
+	}
+	util.LogEnter()
+}
 ```
 
-TODO: Comment.
-
+Well, Python wins hands down. If you prefer readability and you don't care about performance and concurrency support - use Python.
 
 
 # Productivity
 
-TODO
+Go productivity is not as good as in Python (Simple Server implementation took some 3 evenings in Python) and in Clojure (I would now do it in three evenings using Clojure), but Go productivity is much better than in Java (took some 3 weeks in Java even I have programmed some 20 years of Java) and Javascript (took me some 3 weeks and I had to learn the language and Node while implementing Simple Server). Now a week has passed and I'm practically almost done (just two API calls missing and most heavy lifting is already done - if I have time tomorrow evening I will finalize this project tomorrow). So, Go's productivity seems to be somewhere between these languages. Let's summarize the rough results in a table to visualize them better.
+
+
+| Language      |  Evenings | Experience before implementation (+ comments)   |
+| ------------- |----------:|-------------------------------------------------|
+| Clojure       |   3       | About one year. (I.e. 3 with current knowledge) |
+| Java          |   27      | 20 years (I.e. 3 weeks * 7 evenings = 27)       |
+| Javascript    |   27      | Javascript some weeks, Node zero                |
+| Python        |   3       | 20 years                                        |
+| Go            |   8       | Zero                                            |
+
+So, I estimate that if I had at least a couple of years of experience of each language the table would look something like:
+
+| Language      |  Evenings |
+| ------------- |----------:|
+| Clojure       |   3       |
+| Java          |   20      |
+| Javascript    |   8       |
+| Python        |   3       |
+| Go            |   5       |
+
+I dropped Java to 20 evenings I hadn't done serious Java programming for some 1,5 years and I spend some time exploring new Java 10, new Spring functionalities, how to use Java REPL etc. I could drop some 3 evenings away from Go if I had a couple of years of experience using it but Go and especially testing in Go is still a bit verbose which costs a couple of extra evenings compared to Python and Clojure (but Go's verbosity is nothing compared to Java's verbosity). I'm not that sure about Javascript's productivity but I would estimate it is about the same as Go's productivity or a bit higher (afterall I implemented Simple Server with zero Node experience for some 27 evenings compared to 8 evenings in Go). So, the clear winners of the productivity game are Python and Clojure. Therefore: if you need to implement simple scripts, surrogates to aws cli etc: use Python. If you need to manipulate a lot of data and you need excellent concurrency support: use Clojure. If you need bare metal performance with excellent concurrency support and you don't need to manipulate a lot of data: use Go. If you have a really big enterprise system and and offshore development with tens of developers working with the same code base, probably Java. And finally Javascript if you specifically for some reason need to use Node (couldn't find other real reasons to use Node since regarding various aspects there almost always is a better backend language).
 
 
 # Lines of Code
