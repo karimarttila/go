@@ -22,6 +22,11 @@ type SigninData struct {
 	Password  string `json:"password"`
 }
 
+type LoginData struct {
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+}
+
 // Using ErrorResponder interface we can make error handling generic for all API calls.
 type ErrorResponder interface {
 	GetMsg() string
@@ -68,10 +73,18 @@ func (e SigninErrorResponse) WriteError(writer http.ResponseWriter) (err error) 
 	return err
 }
 
+
 type SigninResponse struct {
 	Flag  bool   `json:"-"`
 	Ret   string `json:"ret"`
 	Email string `json:"email"`
+}
+
+type LoginResponse struct {
+	Flag  bool   `json:"-"`
+	Ret   string `json:"ret"`
+	Email string `json:"email"`
+	JsonWebToken string `json:"json-web-token"`
 }
 
 // /info API.
@@ -103,6 +116,15 @@ func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	util.LogExit()
 }
 
+func createErrorResponse(msg string) (errorResponse ErrorResponse) {
+	util.LogEnter()
+	ret := &ErrorResponse{true, "failed", msg}
+	util.LogExit()
+	errorResponse = *ret
+	return errorResponse
+}
+
+// TODO: it would be nice to make this generic as well.
 func createSigninErrorResponse(msg string, email string) (signinErrorResponse SigninErrorResponse) {
 	util.LogEnter()
 	ret := &SigninErrorResponse{
@@ -134,36 +156,60 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 		signinErrorResponse = createSigninErrorResponse("Decoding request body failed", "")
 		httpStatus = errorHandler(signinErrorResponse)
 	} else {
-		var ret userdb.AddUserResponse
-		ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
-		if err != nil {
-			signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
+		if signinData.FirstName == "" || signinData.LastName == "" || signinData.Email == "" || signinData.Password == "" {
+			signinErrorResponse = createSigninErrorResponse("Validation failed - some fields were empty", "")
 			httpStatus = errorHandler(signinErrorResponse)
 		} else {
-			util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
-			signinResponse = SigninResponse{true, "ok", signinData.Email}
-			encoder := json.NewEncoder(writer)
-			encoder.SetEscapeHTML(false)
-			err := encoder.Encode(signinResponse)
+			var ret userdb.AddUserResponse
+			ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
 			if err != nil {
 				signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
 				httpStatus = errorHandler(signinErrorResponse)
+			} else {
+				util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
+				signinResponse = SigninResponse{true, "ok", signinData.Email}
+				encoder := json.NewEncoder(writer)
+				encoder.SetEscapeHTML(false)
+				err := encoder.Encode(signinResponse)
+				if err != nil {
+					signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
+					httpStatus = errorHandler(signinErrorResponse)
+				}
 			}
 		}
 	}
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(httpStatus)
-	if err != nil {
+	if signinErrorResponse.Flag {
 		writeError(writer, signinErrorResponse)
 	}
 	util.LogExit()
 }
+
+func postLogin(writer http.ResponseWriter, request *http.Request) {
+	util.LogEnter()
+//	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
+//	var loginData LoginData
+//	var httpStatus int
+//	var loginResponse LoginResponse
+//	decoder := json.NewDecoder(request.Body)
+//	err := decoder.Decode(&loginData)
+//	if err != nil {
+//		errorResponse = createErrorResponse("Decoding request body failed")
+//		httpStatus = errorHandler(errorResponse)
+//	} else {
+//		validationPassed := userdb.EmailAlreadyExists(loginData.Email)
+//	}
+	util.LogExit()
+}
+
 
 // Registers the API calls.
 func handleRequests() {
 	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
 	http.HandleFunc("/signin", postSignin)
+	http.HandleFunc("/login", postLogin)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
 	log.Fatal(http.ListenAndServe(":"+util.MyConfig["port"], nil))
 	util.LogExit()

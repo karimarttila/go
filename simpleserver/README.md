@@ -10,6 +10,7 @@
 - [Static Code Analysis](#static-code-analysis)
 - [JSON Web Token](#json-web-token)
 - [Error handling](#error-handling)
+- [Go Interfaces](#go-interfaces)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
 - [Map, Reduce and Filter](#map-reduce-and-filter)
@@ -208,6 +209,10 @@ Ok. We got out of the else branches, but we introduced some extra mental burden 
 The latter version has 28 lines and my preferred version has only 26 lines - so after all we didn't even save any lines.
 
 And what does say one of my programming gurus about this? Let's take McConnell's Code Complete ed. 2 from by book shelf and search the relevant chapter (17.1): "**Minimize the number of returns in each routine**. It’s harder to understand a routine when, reading it at the bottom, you’re unaware of the possibility that it returned somewhere above. For that reason, use returns judiciously - only when they improve readability." 
+
+# Go Interfaces
+
+TODO: Example from server.go error handling...
 
 
 # Testing
