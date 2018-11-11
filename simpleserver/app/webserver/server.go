@@ -30,7 +30,7 @@ type ErrorResponse struct {
 
 type SigninErrorResponse struct {
 	ErrorResponse
-	Email     string `json:"email"`
+	Email string `json:"email"`
 }
 
 type ErrorResponseI interface {
@@ -69,7 +69,7 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(httpStatus)
 	util.LogExit()
 }
-// Last resort error handler.
+
 func writeError(writer http.ResponseWriter, errorRet SigninErrorResponse) {
 	util.LogEnter()
 	encoder := json.NewEncoder(writer)
@@ -82,18 +82,16 @@ func writeError(writer http.ResponseWriter, errorRet SigninErrorResponse) {
 	util.LogExit()
 }
 
-
 func createSigninErrorResponse(msg string, email string) (signinErrorResponse SigninErrorResponse) {
 	util.LogEnter()
 	ret := &SigninErrorResponse{
-		ErrorResponse: ErrorResponse{true, "failed", msg,},
-		Email: email,
+		ErrorResponse: ErrorResponse{true, "failed", msg},
+		Email:         email,
 	}
 	util.LogExit()
 	signinErrorResponse = *ret
 	return signinErrorResponse
 }
-
 
 func errorHandler(err ErrorResponseI) (httpStatus int) {
 	util.LogEnter()
