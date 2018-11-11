@@ -22,27 +22,50 @@ type SigninData struct {
 	Password  string `json:"password"`
 }
 
+// Using ErrorResponder interface we can make error handling generic for all API calls.
+type ErrorResponder interface {
+	GetMsg() string
+	WriteError(writer http.ResponseWriter) (err error)
+}
+
+// Used by all ErrorResponder entities.
+func getEncoder(writer http.ResponseWriter) (encoder *json.Encoder) {
+	encoder = json.NewEncoder(writer)
+	encoder.SetEscapeHTML(false)
+	return encoder
+}
+
+// ErrorResponse is the base struct for all web layer Error response entities.
 type ErrorResponse struct {
 	Flag bool   `json:"-"` // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
 	Ret  string `json:"ret"`
 	Msg  string `json:"msg"`
 }
 
+func (e ErrorResponse) GetMsg() string {
+	return e.Msg
+}
+
+func (e ErrorResponse) WriteError(writer http.ResponseWriter) (err error) {
+	encoder := getEncoder(writer)
+	err = encoder.Encode(e)
+	return err
+}
+
+// SigninErrorResponse is the /signin API error response entity.
 type SigninErrorResponse struct {
 	ErrorResponse
 	Email string `json:"email"`
 }
 
-type ErrorResponseI interface {
-	GetMsg() string
-}
-
-func (e ErrorResponse) GetMsg() string {
-	return e.Msg
-}
-
 func (e SigninErrorResponse) GetMsg() string {
 	return e.Msg
+}
+
+func (e SigninErrorResponse) WriteError(writer http.ResponseWriter) (err error) {
+	encoder := getEncoder(writer)
+	err = encoder.Encode(e)
+	return err
 }
 
 type SigninResponse struct {
@@ -70,14 +93,12 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 	util.LogExit()
 }
 
-func writeError(writer http.ResponseWriter, errorRet SigninErrorResponse) {
+func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	util.LogEnter()
-	encoder := json.NewEncoder(writer)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(errorRet)
+	err := errorResponder.WriteError(writer)
 	if err != nil {
 		// Everything else failed, just write the json as string to http.ResponseWriter.
-		writer.Write([]byte(`{"ret":"failed","msg":"A total failure, original error: ` + errorRet.Msg + `"}`))
+		writer.Write([]byte(`{"ret":"failed","msg":"A total failure, original error: ` + errorResponder.GetMsg() + `"}`))
 	}
 	util.LogExit()
 }
@@ -93,7 +114,7 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 	return signinErrorResponse
 }
 
-func errorHandler(err ErrorResponseI) (httpStatus int) {
+func errorHandler(err ErrorResponder) (httpStatus int) {
 	util.LogEnter()
 	util.LogError(err.GetMsg())
 	httpStatus = http.StatusBadRequest
