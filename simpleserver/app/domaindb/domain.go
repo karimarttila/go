@@ -15,6 +15,7 @@ import (
 var myDomainDB = initDomainDb()
 
 type ProductGroups struct {
+	Flag bool   `json:"-"` // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
 	ProductGroupsMap map[string]string `json:"product-groups"`
 }
 
@@ -41,7 +42,7 @@ type RawProducts struct {
 }
 
 type Products struct {
-	ProductsList []Product `json:"product-groups"`
+	ProductsList []Product `json:"products"`
 	Ret          string    `json:"ret"`
 }
 
@@ -81,7 +82,7 @@ func readProductGroups() ProductGroups {
 	for _, line := range lines {
 		myPG[line[0]] = line[1]
 	}
-	productGroups := ProductGroups{myPG}
+	productGroups := ProductGroups{true, myPG}
 	util.LogExit()
 	return productGroups
 }

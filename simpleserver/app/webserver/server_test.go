@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"net/http"
@@ -20,7 +21,7 @@ func TestGetInfo(t *testing.T) {
 	// NOTE: Here we actually call directly the getInfo handler!
 	http.HandlerFunc(getInfo).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("GetInfo handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("getInfo handler returned wrong status code: expected: %v actual: %v",
 			http.StatusOK, status)
 	}
 	response := recorder.Body.String()
@@ -62,7 +63,7 @@ func TestPostSignin(t *testing.T) {
 	recorder, request, _ := addTestUser(t, true)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusBadRequest {
-		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("postSignin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusBadRequest, status)
 	}
 	responseStr := recorder.Body.String()
@@ -82,7 +83,7 @@ func TestPostSignin(t *testing.T) {
 	recorder, request, testEmail = addTestUser(t, false)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("postSignin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusOK, status)
 	}
 	responseStr = recorder.Body.String()
@@ -101,7 +102,7 @@ func TestPostSignin(t *testing.T) {
 	recorder, request, testEmail = addTestUser(t, false)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusBadRequest {
-		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("postSignin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusBadRequest, status)
 	}
 	responseStr = recorder.Body.String()
@@ -136,7 +137,7 @@ func TestLogin(t *testing.T) {
 	// NOTE: Here we actually call directly the getInfo handler!
 	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusBadRequest {
-		t.Errorf("PostLogin handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("postLogin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusBadRequest, status)
 	}
 	responseStr := recorder.Body.String()
@@ -165,7 +166,7 @@ func TestLogin(t *testing.T) {
 	// NOTE: Here we actually call directly the getInfo handler!
 	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("PostLogin handler returned wrong status code: expected: %v actual: %v",
+		t.Errorf("postLogin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusOK, status)
 	}
 	responseStr = recorder.Body.String()
@@ -183,6 +184,93 @@ func TestLogin(t *testing.T) {
 	jsonWebToken := responseMap["json-web-token"]
 	if len(jsonWebToken) < 20 {
 		t.Errorf("The json-web-token was too short, map: %s", responseMap)
+	}
+	util.LogEnter()
+}
+
+// Reusing the TestLogin functionality. Maybe refactoring later.
+func getTestToken (t *testing.T) (token string, err error) {
+	util.LogEnter()
+	port := util.MyConfig["port"]
+	bodyMap := map[string]interface{}{
+		"email":    "kari.karttinen@foo.com",
+		"password": "Kari",
+	}
+	myBody, _ := json.Marshal(bodyMap)
+	request := httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("postLogin handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	responseStr := recorder.Body.String()
+	util.LogDebug("Got response: " + responseStr)
+	var responseMap map[string]string
+	err = json.NewDecoder(recorder.Body).Decode(&responseMap)
+	if err != nil {
+		t.Errorf("Decoding request failed, err: %s", err.Error())
+	}
+	if responseMap["ret"] != "ok" {
+		t.Errorf("The response ret value should have been 'ok', map: %s", responseMap)
+	}
+	if responseMap["msg"] != "Credentials ok" {
+		t.Errorf("The response msg was not correct, map: %s", responseMap)
+	}
+	token = responseMap["json-web-token"]
+	if len(token) < 20 {
+		t.Errorf("The json-web-token was too short, map: %s", responseMap)
+	}
+	util.LogEnter()
+	return token, err
+}
+
+
+func TestGetProductGroups(t *testing.T) {
+	util.LogEnter()
+	port := util.MyConfig["port"]
+	token, err := getTestToken(t)
+	if err != nil {
+		t.Errorf("Failed to get test token: %s", err.Error())
+	}
+	util.LogTrace("Test token: " + token)
+	encoded := base64.StdEncoding.EncodeToString([]byte(token))
+	if err != nil {
+		t.Errorf("Failed to base64 decode token: %s", err.Error())
+	}
+	//NOTE: We actually call directly the handler.
+	// See below: "http.HandlerFunc(getInfo)...."
+	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product-groups", nil)
+	request.Header.Add("authorization", "Basic " + encoded)
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getProductGroups).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("getProductGroups handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	response := recorder.Body.String()
+	if len(response) == 0 {
+		t.Error("Response was nil or empty")
+	}
+	// NOTE: Might look a bit weird, but it's pretty straightforward:
+	// pgMap is a map (key:string), and values are maps, which keys are strings and values are strings.
+	pgMap := make(map[string]map[string]string)
+	err = json.Unmarshal([]byte(response), &pgMap)
+	if err != nil {
+		t.Errorf("Unmarshalling response failed: %s", err.Error())
+	}
+	pg, ok := pgMap["product-groups"]
+	if !ok {
+		t.Errorf("Didn't find 'product-groups' in response")
+	}
+	pg1, ok := pg["1"]
+	if !ok {
+		t.Errorf("Didn't find product group 1 in response")
+	}
+	if pg1 != "Books" {
+		t.Errorf("Product group 1 should have been 'Books'")
 	}
 	util.LogEnter()
 }

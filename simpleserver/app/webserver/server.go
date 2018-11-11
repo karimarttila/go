@@ -4,11 +4,14 @@
 package webserver
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"github.com/karimarttila/go/simpleserver/app/domaindb"
 	"github.com/karimarttila/go/simpleserver/app/userdb"
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type InfoMessage struct {
@@ -231,12 +234,71 @@ func postLogin(writer http.ResponseWriter, request *http.Request) {
 	util.LogExit()
 }
 
+func isValidToken(request *http.Request) (email string, errorResponse ErrorResponse) {
+	util.LogEnter()
+	auth := request.Header.Get("Authorization")
+	if auth == "" {
+		errorResponse = createErrorResponse("Authorization not found in the header parameters")
+	} else {
+		util.LogTrace("Got auth: " + auth)
+		authRest := auth[6:] // Get rid of "Basic "
+		decodedBytes, err := base64.StdEncoding.DecodeString(authRest)
+		if err != nil {
+			errorResponse = createErrorResponse("Couldn't base64 decode auth string: " + err.Error())
+		} else {
+			decoded := string(decodedBytes)
+			util.LogTrace("decoded: " + decoded)
+			index := strings.Index(decoded, ":NOT")
+			var token string
+			if index == -1 {
+				token = decoded
+			} else {
+				token = decoded[0:index]
+			}
+			util.LogTrace("token: " + token)
+			var tokenResponse TokenResponse
+			tokenResponse, err = ValidateJsonWebToken(token)
+			if err != nil {
+				errorResponse = createErrorResponse("Couldn't validate token: " + err.Error())
+			} else {
+				util.LogTrace("tokenResponse.email: " + tokenResponse.Email)
+				email = tokenResponse.Email
+			}
+		}
+	}
+	util.LogExit()
+	return email, errorResponse
+}
+
+
+func getProductGroups(writer http.ResponseWriter, request *http.Request) {
+	util.LogEnter()
+	parsedEmail, errorResponse := isValidToken(request)
+	var productGroups domaindb.ProductGroups
+	if !errorResponse.Flag {
+		util.LogTrace("parsedEmail from token: " + parsedEmail)
+		productGroups = domaindb.GetProductGroups()
+		encoder := json.NewEncoder(writer)
+		encoder.SetEscapeHTML(false)
+		err := encoder.Encode(productGroups)
+		if err != nil {
+			errorResponse = createErrorResponse(err.Error())
+		}
+	}
+	writeHeaders(writer, errorResponse)
+	if errorResponse.Flag {
+		writeError(writer, errorResponse)
+	}
+	util.LogExit()
+}
+
 // Registers the API calls.
 func handleRequests() {
 	util.LogEnter()
 	http.HandleFunc("/info", getInfo)
 	http.HandleFunc("/signin", postSignin)
 	http.HandleFunc("/login", postLogin)
+	http.HandleFunc("/product-groups", getProductGroups)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
 	log.Fatal(http.ListenAndServe(":"+util.MyConfig["port"], nil))
 	util.LogExit()
