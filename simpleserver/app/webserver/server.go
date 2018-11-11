@@ -28,6 +28,23 @@ type ErrorResponse struct {
 	Msg  string `json:"msg"`
 }
 
+type SigninErrorResponse struct {
+	ErrorResponse
+	Email     string `json:"email"`
+}
+
+type ErrorResponseI interface {
+	GetMsg() string
+}
+
+func (e ErrorResponse) GetMsg() string {
+	return e.Msg
+}
+
+func (e SigninErrorResponse) GetMsg() string {
+	return e.Msg
+}
+
 type SigninResponse struct {
 	Flag  bool   `json:"-"`
 	Ret   string `json:"ret"`
@@ -52,18 +69,8 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 	writer.WriteHeader(httpStatus)
 	util.LogExit()
 }
-
-func errorHandler(msg string) (errorResponse ErrorResponse, httpStatus int) {
-	util.LogEnter()
-	util.LogError(msg)
-	errorResponse = ErrorResponse{true, "failed", msg}
-	httpStatus = http.StatusBadRequest
-	util.LogExit()
-	return errorResponse, httpStatus
-}
-
 // Last resort error handler.
-func writeError(writer http.ResponseWriter, errorRet ErrorResponse) {
+func writeError(writer http.ResponseWriter, errorRet SigninErrorResponse) {
 	util.LogEnter()
 	encoder := json.NewEncoder(writer)
 	encoder.SetEscapeHTML(false)
@@ -75,35 +82,60 @@ func writeError(writer http.ResponseWriter, errorRet ErrorResponse) {
 	util.LogExit()
 }
 
+
+func createSigninErrorResponse(msg string, email string) (signinErrorResponse SigninErrorResponse) {
+	util.LogEnter()
+	ret := &SigninErrorResponse{
+		ErrorResponse: ErrorResponse{true, "failed", msg,},
+		Email: email,
+	}
+	util.LogExit()
+	signinErrorResponse = *ret
+	return signinErrorResponse
+}
+
+
+func errorHandler(err ErrorResponseI) (httpStatus int) {
+	util.LogEnter()
+	util.LogError(err.GetMsg())
+	httpStatus = http.StatusBadRequest
+	util.LogExit()
+	return httpStatus
+}
+
 func postSignin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
-	var errorRet ErrorResponse
+	var signinErrorResponse SigninErrorResponse
 	var signinData SigninData
 	var httpStatus int
 	var signinResponse SigninResponse
 	decoder := json.NewDecoder(request.Body)
 	err := decoder.Decode(&signinData)
 	if err != nil {
-		errorRet, httpStatus = errorHandler("Decoding request body failed")
+		signinErrorResponse = createSigninErrorResponse("Decoding request body failed", "")
+		httpStatus = errorHandler(signinErrorResponse)
 	} else {
 		var ret userdb.AddUserResponse
 		ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
 		if err != nil {
-			errorRet, httpStatus = errorHandler(err.Error())
+			signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
+			httpStatus = errorHandler(signinErrorResponse)
 		} else {
-			signinResponse = SigninResponse{true, "ok", ret.Email}
+			util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
+			signinResponse = SigninResponse{true, "ok", signinData.Email}
 			encoder := json.NewEncoder(writer)
 			encoder.SetEscapeHTML(false)
 			err := encoder.Encode(signinResponse)
 			if err != nil {
-				errorRet, httpStatus = errorHandler(err.Error())
+				signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
+				httpStatus = errorHandler(signinErrorResponse)
 			}
 		}
 	}
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(httpStatus)
 	if err != nil {
-		writeError(writer, errorRet)
+		writeError(writer, signinErrorResponse)
 	}
 	util.LogExit()
 }
