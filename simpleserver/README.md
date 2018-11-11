@@ -83,13 +83,11 @@ And so we finalized our short tour to "Go and package management."
 
 # GoLand
 
-I use [GoLand](https://www.jetbrains.com/go/)
-
- PyCharm is really good IDE for Python programming - the editor is great and there are a lot of utilities that make your Python programming more productive (code completion, test runners, automatic linter ([PEP](https://www.python.org/dev/peps/pep-0008/)) etc). 
+I use [GoLand](https://www.jetbrains.com/go/) as my Go IDE.
 
 I use [IntelliJ IDEA](https://www.jetbrains.com/idea/) for Java programming, [PyCharm](https://www.jetbrains.com/pycharm) for Python programming and IntelliJ IDEA with [Cursive](https://cursive-ide.com/) plugin for Clojure programming. Since GoLand, PyCharm and IDEA are provided by the same company (JetBrains) they provide very similar look-and-feel. So, there are a lot of synergy benefits to use the same IDE for several programming languages.
 
-GoLand is really great for Go development. I create a test run configuration for each package and while I was developing that package I once in a while ran the equivalent GoLand test run configuration. And if there were some errors it was very fast to add a debugger breakpoint to the failed test, hit the debugger and check the system state (variable values...) in the breakpoint. Go compiles extremely fast and the GoLand debugger starts blazingly fast so developing Go code like this was really fast. Using the GoLand debuggur it's also a nice way to look what's inside the standard library entities.
+GoLand is really great for Go development. I created a test run configuration for each package and while I was developing that package I once in a while ran the equivalent GoLand test run configuration. If there were some errors it was very fast to add a debugger breakpoint to the failed test, hit the debugger and check the system state (variable values...) in the breakpoint. Go compiles extremely fast and the GoLand debugger starts blazingly fast so developing Go code like this was really fast. Using the GoLand debuggur it's also a nice way to look what's inside the standard library entities.
 
 
 # Code Format
