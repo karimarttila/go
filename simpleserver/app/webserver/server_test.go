@@ -17,12 +17,12 @@ func TestGetInfo(t *testing.T) {
 	// See below: "http.HandlerFunc(getInfo)...."
 	request := httptest.NewRequest("GET", "http://localhost:"+port+"/info", nil)
 	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getInfo).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusOK {
 		t.Errorf("GetInfo handler returned wrong status code: expected: %v actual: %v",
 			http.StatusOK, status)
 	}
-	// NOTE: Here we actually call directly the getInfo handler!
-	http.HandlerFunc(getInfo).ServeHTTP(recorder, request)
 	response := recorder.Body.String()
 	if len(response) == 0 {
 		t.Error("Response was nil or empty")
@@ -51,10 +51,6 @@ func addTestUser(t *testing.T, firstNameMissing bool) (recorder *httptest.Respon
 	myBody, _ := json.Marshal(bodyMap)
 	request = httptest.NewRequest("POST", "http://localhost:"+port+"/signin", bytes.NewReader(myBody))
 	recorder = httptest.NewRecorder()
-	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
-			http.StatusOK, status)
-	}
 	util.LogEnter()
 	return recorder, request, testEmail
 }
@@ -65,6 +61,10 @@ TestPostSignin(t *testing.T) {
 	// Test missing parameter.
 	recorder, request, testEmail := addTestUser(t, true)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusBadRequest {
+		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+			http.StatusBadRequest, status)
+	}
 	responseStr := recorder.Body.String()
 	util.LogDebug("Got response: " + responseStr)
 	var responseMap map[string]interface{}
@@ -81,6 +81,10 @@ TestPostSignin(t *testing.T) {
 	// First time adding the user, should go smoothly.
 	recorder, request, testEmail = addTestUser(t, false)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
 	responseStr = recorder.Body.String()
 	util.LogDebug("Got response: " + responseStr)
 	err = json.NewDecoder(recorder.Body).Decode(&responseMap)
@@ -96,6 +100,10 @@ TestPostSignin(t *testing.T) {
 	// Second time the user should be in the db already and signin should fail.
 	recorder, request, testEmail = addTestUser(t, false)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusBadRequest {
+		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
+			http.StatusBadRequest, status)
+	}
 	responseStr = recorder.Body.String()
 	util.LogDebug("Got response: " + responseStr)
 	err = json.NewDecoder(recorder.Body).Decode(&responseMap)
@@ -126,12 +134,12 @@ func TestLogin(t *testing.T) {
 	myBody, _ := json.Marshal(bodyMap)
 	request := httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
 	recorder := httptest.NewRecorder()
-	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("PostLogin handler returned wrong status code: expected: %v actual: %v",
-			http.StatusOK, status)
-	}
 	// NOTE: Here we actually call directly the getInfo handler!
 	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusBadRequest {
+		t.Errorf("PostLogin handler returned wrong status code: expected: %v actual: %v",
+			http.StatusBadRequest, status)
+	}
 	responseStr := recorder.Body.String()
 	util.LogDebug("Got response: " + responseStr)
 	var responseMap map[string]string
@@ -155,12 +163,12 @@ func TestLogin(t *testing.T) {
 	myBody, _ = json.Marshal(bodyMap)
 	request = httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
 	recorder = httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusOK {
 		t.Errorf("PostLogin handler returned wrong status code: expected: %v actual: %v",
 			http.StatusOK, status)
 	}
-	// NOTE: Here we actually call directly the getInfo handler!
-	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
 	responseStr = recorder.Body.String()
 	util.LogDebug("Got response: " + responseStr)
 	err = json.NewDecoder(recorder.Body).Decode(&responseMap)
