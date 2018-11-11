@@ -58,7 +58,8 @@ func addTestUser(t *testing.T, firstNameMissing bool) (recorder *httptest.Respon
 func TestPostSignin(t *testing.T) {
 	util.LogEnter()
 	// Test missing parameter.
-	recorder, request, testEmail := addTestUser(t, true)
+	var testEmail string
+	recorder, request, _ := addTestUser(t, true)
 	http.HandlerFunc(postSignin).ServeHTTP(recorder, request)
 	if status := recorder.Code; status != http.StatusBadRequest {
 		t.Errorf("PostSignin handler returned wrong status code: expected: %v actual: %v",
