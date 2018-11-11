@@ -121,7 +121,7 @@ Staticcheck open source version is free. If you find the tool useful you should 
 
 # JSON Web Token
 
-Damn, I need one dependency, after all. I was hoping I could implement the Simple Server just using Go standard library but there is no JSON Web Token manipulation in the Go standard library and I really don't want to implement some poor JSON Web Token library myself for this project. So, I'm using [jwt-go](https://github.com/dgrijalva/jwt-go). Sorry, Tuomo. 
+Damn, I needed one dependency, after all. I was hoping I could implement the Simple Server just using Go standard library but there is no JSON Web Token manipulation in the Go standard library and I really don't want to implement some poor JSON Web Token library myself for this project. So, I'm using [jwt-go](https://github.com/dgrijalva/jwt-go). Sorry, Tuomo. 
 
 # Error handling
 
@@ -207,6 +207,54 @@ Ok. We got out of the else branches, but we introduced some extra mental burden 
 The latter version has 28 lines and my preferred version has only 26 lines - so after all we didn't even save any lines.
 
 And what does say one of my programming gurus about this? Let's take McConnell's Code Complete ed. 2 from by book shelf and search the relevant chapter (17.1): "**Minimize the number of returns in each routine**. It’s harder to understand a routine when, reading it at the bottom, you’re unaware of the possibility that it returned somewhere above. For that reason, use returns judiciously - only when they improve readability." 
+
+I implemented an interface based error handling (more about it in the next chapter). It made error handling pretty straigtforward and simple in API handlers, example:
+
+```go
+
+func postLogin(writer http.ResponseWriter, request *http.Request) {
+	util.LogEnter()
+	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
+	var loginData LoginData
+	var loginResponse LoginResponse
+	var jsonWebToken string
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&loginData)
+	if err != nil {
+		errorResponse = createErrorResponse("Decoding request body failed")
+	} else {
+		if loginData.Email == "" || loginData.Password == "" {
+			errorResponse = createErrorResponse("Validation failed - some fields were empty")
+		} else {
+			credentialsOk := userdb.CheckCredentials(loginData.Email, loginData.Password)
+			if !credentialsOk {
+				errorResponse = createErrorResponse("Credentials are not good - either email or password is not correct")
+			} else {
+				jsonWebToken, err = CreateJsonWebToken(loginData.Email)
+				if err != nil {
+					errorResponse = createErrorResponse("Couldn't create token: " + err.Error())
+				} else {
+					loginResponse = LoginResponse{true, "ok", "Credentials ok", jsonWebToken}
+					encoder := json.NewEncoder(writer)
+					encoder.SetEscapeHTML(false)
+					err := encoder.Encode(loginResponse)
+					if err != nil {
+						errorResponse = createErrorResponse(err.Error())
+					}
+				}
+			}
+		}
+	}
+	writeHeaders(writer, errorResponse)
+	if errorResponse.Flag {
+		writeError(writer, errorResponse)
+	}
+	util.LogExit()
+}
+```
+
+So, as you can see every step check if there was an error, and if was, we create an ErrorResponse and that's it. If we get to the end we know that everything went smoothly and we can write the actual payload to the http ResponseWriter. If something went wrong, we just write the ErrorResponse to the http ResponseWriter (what ever the error was). I think this is clean enough for me. And if I compare it to Java's exception handling this is not bad at all. 
+
 
 # Go Interfaces
 
