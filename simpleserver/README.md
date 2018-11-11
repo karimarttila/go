@@ -339,16 +339,77 @@ Go tests are pretty easy to create. You don't have asserts but instead you just 
 ```go
 func TestGetProductGroups(t *testing.T) {
 	util.LogEnter()
-	myProductGroups := GetProductGroups()
-	myPGMap := myProductGroups.ProductGroupsMap
-	if len(myPGMap) != 2 {
-		t.Errorf("There should be exactly two product groups, got: %d", len(myPGMap))
+	port := util.MyConfig["port"]
+	token, err := getTestToken(t)
+	if err != nil {
+		t.Errorf("Failed to get test token: %s", err.Error())
 	}
-	if myPGMap["1"] != "Books" || myPGMap["2"] != "Movies" {
-		t.Errorf("There were wrong values for product groups: %s", myPGMap)
+	util.LogTrace("Test token: " + token)
+	encoded := base64.StdEncoding.EncodeToString([]byte(token))
+	if err != nil {
+		t.Errorf("Failed to base64 decode token: %s", err.Error())
 	}
+	//NOTE: We actually call directly the handler.
+	// See below: "http.HandlerFunc(getInfo)...."
+	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product-groups", nil)
+	request.Header.Add("authorization", "Basic "+encoded)
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getProductGroups).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("getProductGroups handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	response := recorder.Body.String()
+	if len(response) == 0 {
+		t.Error("Response was nil or empty")
+	}
+	// NOTE: Might look a bit weird, but it's pretty straightforward:
+	// pgMap is a map (key:string), and values are maps, which keys are strings and values are strings.
+	pgMap := make(map[string]map[string]string)
+	err = json.Unmarshal([]byte(response), &pgMap)
+	if err != nil {
+		t.Errorf("Unmarshalling response failed: %s", err.Error())
+	}
+	pg, ok := pgMap["product-groups"]
+	if !ok {
+		t.Errorf("Didn't find 'product-groups' in response")
+	}
+	pg1, ok := pg["1"]
+	if !ok {
+		t.Errorf("Didn't find product group 1 in response")
+	}
+	if pg1 != "Books" {
+		t.Errorf("Product group 1 should have been 'Books'")
+	}
+	util.LogEnter()
 }
 ```
+
+The tests tend to be rather verbose, though. Compare to the equivalent Clojure test:
+
+```clojure
+(deftest get-product-groups-test
+  (log/trace "ENTER get-product-groups-test")
+  (testing "GET: /product-groups"
+    (let [req-body {:email "kari.karttinen@foo.com", :password "Kari"}
+          login-ret (-call-request ws/app-routes "/login" :post nil req-body)
+          dummy (log/trace (str "Got login-ret: " login-ret))
+          login-body (:body login-ret)
+          json-web-token (:json-web-token login-body)
+          params (-create-basic-authentication json-web-token)
+          get-ret (-call-request ws/app-routes "/product-groups" :get params nil)
+          dummy (log/trace (str "Got body: " get-ret))
+          status (:status get-ret)
+          body (:body get-ret)
+          right-body {:ret :ok, :product-groups {"1" "Books", "2" "Movies"}}
+          ]
+      (is (not (nil? json-web-token)))
+      (is (= status 200))
+      (is (= body right-body)))))
+```
+
+The reason is of course that in Clojure we have a dynamically typed language which is designed for data processing (data is more data and more easily to be manipulated). 
 
 You can run all tests in command line using command (TODO: update when all tests have been implemented):
 
@@ -643,11 +704,7 @@ TODO: Examples here.
 
 I fell in love with Go. Go is really a very concise and productive language if you need a robust and performant statically typed language with excellent concurrency support. Much better than Java which compared to Go is verbose, non-productive and concurrency support is far behind Go. I have done quite a lot of C++ and Java programming and I must say that Go's error handling with idiomatic error entity as paired with the actual return value from functions is really great and simple. Go is definitely going to be my choice of statically typed language in my future projects. But still, if I need to create a quick script, e.g. a surrogate script for handling aws cli calls and process return json - I will choose Python. And if I need to process a lot of data - Clojure. But when you need statically typed language and excellent performance with great concurrency support - Go. 
 
-I started my programming career with C. Hacking Go is a bit like coming home, except you don't need to be meticulous with memory allocation / deallocation. I think Go gives all goodies from C programming but takes care of the heavy lifting of what's difficult in C. Go code is really simple and elegant - the language provides the exact support for those things that you really need and doesn't add anything extra to the language (like Einstein put it: "Everything should be made as simple as possible, but not simpler").
+I started my programming career with programming C. Hacking Go is a bit like coming home, except you don't need to be meticulous with memory allocation / deallocation. I think Go gives all goodies from C programming but takes care of the heavy lifting of what's difficult in C. Go code is really simple and elegant - the language provides the exact support for those things that you really need and doesn't add anything extra to the language (like Einstein put it: "Everything should be made as simple as possible, but not simpler").
 
 The feeling was actually quite amazing. I started my Go hacking with practically zero Go knowledge on Monday, and on Saturday I felt like all pieces of the puzzle just locked in to the right places and creating code was really fluent and easy. 
 
-
-
-
-TODO
