@@ -270,7 +270,6 @@ func isValidToken(request *http.Request) (email string, errorResponse ErrorRespo
 	return email, errorResponse
 }
 
-
 func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	parsedEmail, errorResponse := isValidToken(request)

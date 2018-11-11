@@ -189,7 +189,7 @@ func TestLogin(t *testing.T) {
 }
 
 // Reusing the TestLogin functionality. Maybe refactoring later.
-func getTestToken (t *testing.T) (token string, err error) {
+func getTestToken(t *testing.T) (token string, err error) {
 	util.LogEnter()
 	port := util.MyConfig["port"]
 	bodyMap := map[string]interface{}{
@@ -226,7 +226,6 @@ func getTestToken (t *testing.T) (token string, err error) {
 	return token, err
 }
 
-
 func TestGetProductGroups(t *testing.T) {
 	util.LogEnter()
 	port := util.MyConfig["port"]
@@ -242,7 +241,7 @@ func TestGetProductGroups(t *testing.T) {
 	//NOTE: We actually call directly the handler.
 	// See below: "http.HandlerFunc(getInfo)...."
 	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product-groups", nil)
-	request.Header.Add("authorization", "Basic " + encoded)
+	request.Header.Add("authorization", "Basic "+encoded)
 	recorder := httptest.NewRecorder()
 	// NOTE: Here we actually call directly the getInfo handler!
 	http.HandlerFunc(getProductGroups).ServeHTTP(recorder, request)
