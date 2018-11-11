@@ -90,7 +90,7 @@ func AddUser(email string, firstName string, lastName string, password string) (
 	return ret, err
 }
 
-func checkCredentials(userEmail string, userPassword string) bool {
+func CheckCredentials(userEmail string, userPassword string) bool {
 	util.LogEnter()
 	ret := false
 	usersMap := myUsersDB.usersMap

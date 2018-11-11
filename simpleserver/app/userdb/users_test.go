@@ -39,17 +39,17 @@ func TestAddUser(t *testing.T) {
 
 func TestCheckCredentials(t *testing.T) {
 	util.LogEnter()
-	response := checkCredentials("kari.karttinen@foo.com", "Kari")
+	response := CheckCredentials("kari.karttinen@foo.com", "Kari")
 	if !response {
 		t.Errorf("User kari.karttinen@foo.com should have succeeded since both email and password ok, response: %s", strconv.FormatBool(response))
 	}
 	// Wrong password
-	response = checkCredentials("kari.karttinen@foo.com", "WRONG-PASSWORD")
+	response = CheckCredentials("kari.karttinen@foo.com", "WRONG-PASSWORD")
 	if response {
 		t.Errorf("User kari.karttinen@foo.com should have failed since wrong password response: %s", strconv.FormatBool(response))
 	}
 	// Wrong email
-	response = checkCredentials("WRONG.USERNAME@foo.com", "Kari")
+	response = CheckCredentials("WRONG.USERNAME@foo.com", "Kari")
 	if response {
 		t.Errorf("User kari.karttinen@foo.com should have failed since wrong email, response: %s", strconv.FormatBool(response))
 	}

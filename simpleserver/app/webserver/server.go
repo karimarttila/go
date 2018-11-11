@@ -23,12 +23,13 @@ type SigninData struct {
 }
 
 type LoginData struct {
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // Using ErrorResponder interface we can make error handling generic for all API calls.
 type ErrorResponder interface {
+	GetFlag() bool
 	GetMsg() string
 	WriteError(writer http.ResponseWriter) (err error)
 }
@@ -47,6 +48,10 @@ type ErrorResponse struct {
 	Msg  string `json:"msg"`
 }
 
+func (e ErrorResponse) GetFlag() bool {
+	return e.Flag
+}
+
 func (e ErrorResponse) GetMsg() string {
 	return e.Msg
 }
@@ -63,6 +68,10 @@ type SigninErrorResponse struct {
 	Email string `json:"email"`
 }
 
+func (e SigninErrorResponse) GetFlag() bool {
+	return e.Flag
+}
+
 func (e SigninErrorResponse) GetMsg() string {
 	return e.Msg
 }
@@ -73,7 +82,6 @@ func (e SigninErrorResponse) WriteError(writer http.ResponseWriter) (err error) 
 	return err
 }
 
-
 type SigninResponse struct {
 	Flag  bool   `json:"-"`
 	Ret   string `json:"ret"`
@@ -81,9 +89,9 @@ type SigninResponse struct {
 }
 
 type LoginResponse struct {
-	Flag  bool   `json:"-"`
-	Ret   string `json:"ret"`
-	Email string `json:"email"`
+	Flag         bool   `json:"-"`
+	Ret          string `json:"ret"`
+	Msg        string `json:"msg"`
 	JsonWebToken string `json:"json-web-token"`
 }
 
@@ -119,8 +127,9 @@ func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
 func createErrorResponse(msg string) (errorResponse ErrorResponse) {
 	util.LogEnter()
 	ret := &ErrorResponse{true, "failed", msg}
-	util.LogExit()
+	util.LogError(ret.GetMsg())
 	errorResponse = *ret
+	util.LogExit()
 	return errorResponse
 }
 
@@ -131,40 +140,38 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 		ErrorResponse: ErrorResponse{true, "failed", msg},
 		Email:         email,
 	}
-	util.LogExit()
+	util.LogError(ret.GetMsg())
 	signinErrorResponse = *ret
+	util.LogExit()
 	return signinErrorResponse
 }
 
-func errorHandler(err ErrorResponder) (httpStatus int) {
-	util.LogEnter()
-	util.LogError(err.GetMsg())
-	httpStatus = http.StatusBadRequest
-	util.LogExit()
-	return httpStatus
+func writeHeaders(writer http.ResponseWriter, errorResponder ErrorResponder) {
+	writer.Header().Set("Content-Type", "application/json")
+	if errorResponder.GetFlag() {
+		writer.WriteHeader(http.StatusBadRequest)
+	} else {
+		writer.WriteHeader(http.StatusOK)
+	}
 }
 
 func postSignin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	var signinErrorResponse SigninErrorResponse
 	var signinData SigninData
-	var httpStatus int
 	var signinResponse SigninResponse
 	decoder := json.NewDecoder(request.Body)
 	err := decoder.Decode(&signinData)
 	if err != nil {
 		signinErrorResponse = createSigninErrorResponse("Decoding request body failed", "")
-		httpStatus = errorHandler(signinErrorResponse)
 	} else {
 		if signinData.FirstName == "" || signinData.LastName == "" || signinData.Email == "" || signinData.Password == "" {
 			signinErrorResponse = createSigninErrorResponse("Validation failed - some fields were empty", "")
-			httpStatus = errorHandler(signinErrorResponse)
 		} else {
 			var ret userdb.AddUserResponse
 			ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
 			if err != nil {
 				signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
-				httpStatus = errorHandler(signinErrorResponse)
 			} else {
 				util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
 				signinResponse = SigninResponse{true, "ok", signinData.Email}
@@ -173,13 +180,11 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 				err := encoder.Encode(signinResponse)
 				if err != nil {
 					signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
-					httpStatus = errorHandler(signinErrorResponse)
 				}
 			}
 		}
 	}
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(httpStatus)
+	writeHeaders(writer, signinErrorResponse)
 	if signinErrorResponse.Flag {
 		writeError(writer, signinErrorResponse)
 	}
@@ -188,21 +193,43 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 
 func postLogin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
-//	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
-//	var loginData LoginData
-//	var httpStatus int
-//	var loginResponse LoginResponse
-//	decoder := json.NewDecoder(request.Body)
-//	err := decoder.Decode(&loginData)
-//	if err != nil {
-//		errorResponse = createErrorResponse("Decoding request body failed")
-//		httpStatus = errorHandler(errorResponse)
-//	} else {
-//		validationPassed := userdb.EmailAlreadyExists(loginData.Email)
-//	}
+	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
+	var loginData LoginData
+	var loginResponse LoginResponse
+	var jsonWebToken string
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&loginData)
+	if err != nil {
+		errorResponse = createErrorResponse("Decoding request body failed")
+	} else {
+		if loginData.Email == "" || loginData.Password == "" {
+			errorResponse = createErrorResponse("Validation failed - some fields were empty")
+		} else {
+			credentialsOk := userdb.CheckCredentials(loginData.Email, loginData.Password)
+			if !credentialsOk {
+				errorResponse = createErrorResponse("Credentials are not good - either email or password is not correct")
+			} else {
+				jsonWebToken, err = CreateJsonWebToken(loginData.Email)
+				if (err != nil) {
+					errorResponse = createErrorResponse("Couldn't create token: " + err.Error())
+				} else {
+					loginResponse = LoginResponse{true, "ok", "Credentials ok", jsonWebToken}
+					encoder := json.NewEncoder(writer)
+					encoder.SetEscapeHTML(false)
+					err := encoder.Encode(loginResponse)
+					if err != nil {
+						errorResponse = createErrorResponse(err.Error())
+					}
+				}
+			}
+		}
+	}
+	writeHeaders(writer, errorResponse)
+	if errorResponse.Flag {
+		writeError(writer, errorResponse)
+	}
 	util.LogExit()
 }
-
 
 // Registers the API calls.
 func handleRequests() {
