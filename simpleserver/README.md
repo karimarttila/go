@@ -212,7 +212,76 @@ And what does say one of my programming gurus about this? Let's take McConnell's
 
 # Go Interfaces
 
-TODO: Example from server.go error handling...
+Go interfaces are actually pretty nice minimalistic way to provide abstraction and reuse to Go code. Example in [server.go](https://github.com/karimarttila/go/blob/master/simpleserver/app/webserver/server.go):
+
+I realized that various http API calls have a bit different error JSON structures returned and I was wondering that can I use Go interfaces to provide some abstraction to different structs. It turned out that I could:
+
+```go
+// Using ErrorResponder interface we can make error handling generic for all API calls.
+type ErrorResponder interface {
+	GetFlag() bool
+	GetMsg() string
+	WriteError(writer http.ResponseWriter) (err error)
+}
+
+// Used by all ErrorResponder entities.
+func getEncoder(writer http.ResponseWriter) (encoder *json.Encoder) {
+	encoder = json.NewEncoder(writer)
+	encoder.SetEscapeHTML(false)
+	return encoder
+}
+
+// ErrorResponse is the base struct for all web layer Error response entities.
+type ErrorResponse struct {
+	Flag bool   `json:"-"` // Just to tell the whether we have initialized this struct or not (zero-value for bool is false, i.e. if the value is ready we know that we have initialized the struct).
+	Ret  string `json:"ret"`
+	Msg  string `json:"msg"`
+}
+
+func (e ErrorResponse) GetFlag() bool {
+	return e.Flag
+}
+
+...
+// SigninErrorResponse is the /signin API error response entity.
+type SigninErrorResponse struct {
+	ErrorResponse
+	Email string `json:"email"`
+}
+
+func (e SigninErrorResponse) GetFlag() bool {
+	return e.Flag
+}
+```
+
+So, SigninErrorResponse extends the basic ErrorResponse, which provides basic error JSON fields. API says that SigninErrorResponse needs to provide also email field, so SigninErrorResponse is nice to implement in Go by extending ErrorResponse and adding the required email field. 
+
+Then we ErrorResponder interface and both error response structs implements it. Then later in code we can:
+
+
+```go
+//in postSignin:
+	if signinErrorResponse.Flag {
+		writeError(writer, signinErrorResponse)
+	}
+//... and in postLogin:
+	if errorResponse.Flag {
+		writeError(writer, errorResponse)
+	}
+// I.e. we can handle both error responses the same way, and the writeError function uses the interface ErrorResponnder and not the actual structs:
+func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
+	util.LogEnter()
+	err := errorResponder.WriteError(writer)
+	if err != nil {
+		// Everything else failed, just write the json as string to http.ResponseWriter.
+		writer.Write([]byte(`{"ret":"failed","msg":"A total failure, original error: ` + errorResponder.GetMsg() + `"}`))
+	}
+	util.LogExit()
+}
+```
+
+So, using this interface abstraction I could streamline the error handling pretty generic regardless of the struct different API calls use to report errors.
+
 
 
 # Testing
