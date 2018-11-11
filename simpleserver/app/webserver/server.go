@@ -91,7 +91,7 @@ type SigninResponse struct {
 type LoginResponse struct {
 	Flag         bool   `json:"-"`
 	Ret          string `json:"ret"`
-	Msg        string `json:"msg"`
+	Msg          string `json:"msg"`
 	JsonWebToken string `json:"json-web-token"`
 }
 
@@ -210,7 +210,7 @@ func postLogin(writer http.ResponseWriter, request *http.Request) {
 				errorResponse = createErrorResponse("Credentials are not good - either email or password is not correct")
 			} else {
 				jsonWebToken, err = CreateJsonWebToken(loginData.Email)
-				if (err != nil) {
+				if err != nil {
 					errorResponse = createErrorResponse("Couldn't create token: " + err.Error())
 				} else {
 					loginResponse = LoginResponse{true, "ok", "Credentials ok", jsonWebToken}

@@ -55,8 +55,7 @@ func addTestUser(t *testing.T, firstNameMissing bool) (recorder *httptest.Respon
 	return recorder, request, testEmail
 }
 
-func
-TestPostSignin(t *testing.T) {
+func TestPostSignin(t *testing.T) {
 	util.LogEnter()
 	// Test missing parameter.
 	recorder, request, testEmail := addTestUser(t, true)
@@ -122,14 +121,13 @@ TestPostSignin(t *testing.T) {
 	util.LogEnter()
 }
 
-
 func TestLogin(t *testing.T) {
 	util.LogEnter()
 	port := util.MyConfig["port"]
 	// First test failed login. Wrong password.
 	bodyMap := map[string]interface{}{
-		"email":     "kari.karttinen@foo.com",
-		"password":  "WRONG-PASSWORD",
+		"email":    "kari.karttinen@foo.com",
+		"password": "WRONG-PASSWORD",
 	}
 	myBody, _ := json.Marshal(bodyMap)
 	request := httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
@@ -157,8 +155,8 @@ func TestLogin(t *testing.T) {
 	//NOTE: We actually call directly the handler.
 	// See below: "http.HandlerFunc(getInfo)...."
 	bodyMap = map[string]interface{}{
-		"email":     "kari.karttinen@foo.com",
-		"password":  "Kari",
+		"email":    "kari.karttinen@foo.com",
+		"password": "Kari",
 	}
 	myBody, _ = json.Marshal(bodyMap)
 	request = httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
