@@ -30,21 +30,22 @@ type RawProduct struct {
 	GenreOrLanguage  string
 }
 
-type Product struct {
-	PgId  int
-	PId   int
-	Title string
-	Price float64
-}
 
 type RawProducts struct {
-	RawProductsList []RawProduct `json:"raw-product-groups"`
+	RawProductsList [][8]string `json:"raw-product-groups"`
 }
 
 type Products struct {
-	ProductsList []Product `json:"products"`
+	ProductsList [][4]string `json:"products"`
 	Ret          string    `json:"ret"`
 }
+
+type Product struct {
+	Product [8]string `json:"product"`
+	Ret          string    `json:"ret"`
+}
+
+
 
 type DomainDb struct {
 	productGroups  ProductGroups
@@ -94,21 +95,23 @@ func readProducts(pgId int) (RawProducts, Products) {
 	util.LogEnter()
 	lines := readCsvFile("pg-" + strconv.Itoa(pgId) + "-products.csv")
 	count := len(lines)
-	rawProductsList := make([]RawProduct, count)
-	productsList := make([]Product, count)
+	util.LogTrace("count: " + strconv.Itoa(count))
+	var rawProductsList [][8]string
+	var productsList [][4]string
+	//productsList := make([]Product, count)
 	i := 0
 	for _, line := range lines {
 		// NOTE: Beware of shadowing pgId => that's why we have myPgId, not pgId (which is function parameter and the variable would shadow it, not a problem here but might be in certain cases).
-		myPId, _ := strconv.Atoi(line[0])
-		myPgId, _ := strconv.Atoi(line[1])
+		myPId := line[0]
+		myPgId := line[1]
 		myTitle := line[2]
-		myPrice, _ := strconv.ParseFloat(line[3], 64)
+		myPrice := line[3]
 		myAuthorOrDirector := line[4]
-		myYear, _ := strconv.Atoi(line[5])
+		myYear := line[5]
 		myCountry := line[6]
 		myGenreOrLanguage := line[7]
-		rawProductsList[i] = RawProduct{myPgId, myPId, myTitle, myPrice, myAuthorOrDirector, myYear, myCountry, myGenreOrLanguage}
-		productsList[i] = Product{myPId, myPId, myTitle, myPrice}
+		rawProductsList = append(rawProductsList, [8]string{myPId, myPgId, myTitle, myPrice, myAuthorOrDirector, myYear, myCountry, myGenreOrLanguage})
+		productsList = append(productsList, [4]string{myPId, myPgId, myTitle, myPrice})
 		i++
 	}
 	rawProducts := RawProducts{rawProductsList}
@@ -152,18 +155,20 @@ func GetProducts(pgId int) Products {
 }
 
 // Gets product
-func GetProduct(pgId int, pId int) RawProduct {
+func GetProduct(pgId int, pId int) Product {
 	util.LogEnter()
 	rawProductsMap := myDomainDB.rawProductsMap
 	rawProducts := rawProductsMap[pgId]
 	rawProductsList := rawProducts.RawProductsList
-	var ret RawProduct
+	var found [8]string
+	wantedPid := strconv.Itoa(pId)
 	for _, product := range rawProductsList {
-		if product.PId == pId {
-			ret = product
+		if product[0] == wantedPid {
+			found = product
 			break
 		}
 	}
+	ret := Product{found, "ok"}
 	util.LogExit()
 	return ret
 }

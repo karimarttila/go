@@ -101,6 +101,8 @@ type LoginResponse struct {
 
 func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	util.LogEnter()
+	// NOTE: StatusOK is implicitely written first time writer.Write is called
+	// unless other status code set.
 	writer.WriteHeader(http.StatusBadRequest)
 	err := errorResponder.WriteError(writer)
 	if err != nil {
@@ -135,6 +137,14 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 func writeHeaders(writer http.ResponseWriter) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	//writer.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin")
+	//writer.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
+
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+
+
 }
 
 // /info API.
@@ -159,6 +169,9 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 func postSignin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
+	if request.Method == "OPTIONS" {
+		return
+	}
 	var signinErrorResponse SigninErrorResponse
 	var signinData SigninData
 	var signinResponse SigninResponse
@@ -195,6 +208,10 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 func postLogin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
+
+	if request.Method == "OPTIONS" {
+		return
+	}
 	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
 	var loginData LoginData
 	var loginResponse LoginResponse
@@ -270,7 +287,29 @@ func isValidToken(request *http.Request) (email string, errorResponse ErrorRespo
 
 func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
-	writeHeaders(writer)
+	if request.Method == "OPTIONS" {
+		//writer.Header().Set("Access-Control-Allow-Origin", "*")
+		if origin := request.Header.Get("Origin"); origin != "" {
+            writer.Header().Set("Access-Control-Allow-Origin", origin)
+        }
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+		writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+        //writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+        //writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
+        //writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		request.Header.Del("Access-Control-Request-Headers")
+		acc := request.Header.Get("Access-Control-Request-Headers")
+		auth := request.Header.Get("Authorization")
+		util.LogTrace("acc: " + acc)
+		util.LogTrace("auth: " + auth)
+		//writeHeaders(writer)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/json")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin")
+	writer.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
+
 	parsedEmail, errorResponse := isValidToken(request)
 	var productGroups domaindb.ProductGroups
 	if !errorResponse.Flag {
@@ -292,6 +331,24 @@ func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 func getProducts(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
+	if request.Method == "OPTIONS" {
+		//writer.Header().Set("Access-Control-Allow-Origin", "*")
+		if origin := request.Header.Get("Origin"); origin != "" {
+			writer.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+		writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		//writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		//writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
+		//writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		request.Header.Del("Access-Control-Request-Headers")
+		acc := request.Header.Get("Access-Control-Request-Headers")
+		auth := request.Header.Get("Authorization")
+		util.LogTrace("acc: " + acc)
+		util.LogTrace("auth: " + auth)
+		//writeHeaders(writer)
+		return
+	}
 	var parsedEmail string
 	var errorResponse ErrorResponse
 	var pgId int
@@ -329,11 +386,14 @@ func getProducts(writer http.ResponseWriter, request *http.Request) {
 func getProduct(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
+	if request.Method == "OPTIONS" {
+		return
+	}
 	var parsedEmail string
 	var errorResponse ErrorResponse
 	var pgId, pId int
 	var err error
-	var rawProduct domaindb.RawProduct
+	var product domaindb.Product
 	parsedEmail, errorResponse = isValidToken(request)
 	util.LogTrace("parsedEmail: " + parsedEmail)
 	if !errorResponse.Flag {
@@ -355,10 +415,10 @@ func getProduct(writer http.ResponseWriter, request *http.Request) {
 						errorResponse = createErrorResponse("pId was not an integer")
 					} else {
 						util.LogTrace("pgId: " + string(pgId) + ", pId: " + string(pId))
-						rawProduct = domaindb.GetProduct(pgId, pId)
+						product = domaindb.GetProduct(pgId, pId)
 						encoder := json.NewEncoder(writer)
 						encoder.SetEscapeHTML(false)
-						err := encoder.Encode(rawProduct)
+						err := encoder.Encode(product)
 						if err != nil {
 							errorResponse = createErrorResponse(err.Error())
 						}
@@ -381,7 +441,7 @@ func handleRequests() {
 	http.HandleFunc("/login", postLogin)
 	http.HandleFunc("/product-groups", getProductGroups)
 	http.HandleFunc("/products/", getProducts)
-	http.HandleFunc("/product/", getProducts)
+	http.HandleFunc("/product/", getProduct)
 	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
 	log.Fatal(http.ListenAndServe(":"+util.MyConfig["port"], nil))
 	util.LogExit()

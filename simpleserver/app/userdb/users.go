@@ -50,7 +50,9 @@ func initUsersDb() UsersDb {
 	util.LogEnter()
 	testUser1 := User{1, "kari.karttinen@foo.com", "Kari", "Karttinen", "2842551024"}
 	testUser2 := User{2, "timo.tillinen@foo.com", "Timo", "Tillinen", "3655654034"}
-	testUser3 := User{3, "erkka.erkkila@foo.com", "Erkka", "Erkkila", "2077629983"}
+	//testUser3 := User{3, "erkka.erkkila@foo.com", "Erkka", "Erkkila", "2077629983"}
+	// Used in testing manually.
+	testUser3 := User{3, "i", "Erkka", "Erkkila", "3960223172"} // password: "i"
 	userMap := make(map[int]User)
 	userMap[1] = testUser1
 	userMap[2] = testUser2

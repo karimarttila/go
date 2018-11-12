@@ -278,8 +278,8 @@ func TestGetProducts(t *testing.T) {
 		t.Errorf("Returned a wrong number of products in product group 2. Expected 168, got: %d", len(productsList))
 	}
 	product := productsList[48]
-	if product.Title != "Once Upon a Time in the West" {
-		t.Errorf("Got wrong move, expected Once Upon a Time in the West, but got: %s", product.Title)
+	if product[2] != "Once Upon a Time in the West" {
+		t.Errorf("Got wrong movie, expected Once Upon a Time in the West, but got: %s", product[2])
 	}
 	util.LogEnter()
 }
@@ -314,15 +314,15 @@ func TestGetProduct(t *testing.T) {
 	}
 	// NOTE: Might look a bit weird, but it's pretty straightforward:
 	// productsMap is a map (key:string), and values are arrays of arrays of string.
-	var rawProduct domaindb.RawProduct
-	err = json.Unmarshal([]byte(response), &rawProduct)
+	var product domaindb.Product
+	err = json.Unmarshal([]byte(response), &product)
 	if err != nil {
 		t.Errorf("Unmarshalling response failed: %s", err.Error())
 	}
 	// What a magical coincidence! The chosen movie is the best western of all times!
 	// And this time it was the fifth language in row. A magical coincidence, indeed!
-	if rawProduct.Title != "Once Upon a Time in the West" {
-		t.Errorf("Got wrong move, expected Once Upon a Time in the West, but got: %s", rawProduct.Title)
+	if product.Product[2] != "Once Upon a Time in the West" {
+		t.Errorf("Got wrong movie, expected Once Upon a Time in the West, but got: %s", product.Product[2])
 	}
 	util.LogEnter()
 }
