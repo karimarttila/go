@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/karimarttila/go/simpleserver/app/domaindb"
 	"github.com/karimarttila/go/simpleserver/app/util"
 	"net/http"
 	"net/http/httptest"
@@ -155,7 +156,7 @@ func TestLogin(t *testing.T) {
 	}
 	// Then test ok login.
 	//NOTE: We actually call directly the handler.
-	// See below: "http.HandlerFunc(getInfo)...."
+	// See below: "http.HandlerFunc(postLogin)...."
 	bodyMap = map[string]interface{}{
 		"email":    "kari.karttinen@foo.com",
 		"password": "Kari",
@@ -188,48 +189,12 @@ func TestLogin(t *testing.T) {
 	util.LogEnter()
 }
 
-// Reusing the TestLogin functionality. Maybe refactoring later.
-func getTestToken(t *testing.T) (token string, err error) {
-	util.LogEnter()
-	port := util.MyConfig["port"]
-	bodyMap := map[string]interface{}{
-		"email":    "kari.karttinen@foo.com",
-		"password": "Kari",
-	}
-	myBody, _ := json.Marshal(bodyMap)
-	request := httptest.NewRequest("POST", "http://localhost:"+port+"/login", bytes.NewReader(myBody))
-	recorder := httptest.NewRecorder()
-	// NOTE: Here we actually call directly the getInfo handler!
-	http.HandlerFunc(postLogin).ServeHTTP(recorder, request)
-	if status := recorder.Code; status != http.StatusOK {
-		t.Errorf("postLogin handler returned wrong status code: expected: %v actual: %v",
-			http.StatusOK, status)
-	}
-	responseStr := recorder.Body.String()
-	util.LogDebug("Got response: " + responseStr)
-	var responseMap map[string]string
-	err = json.NewDecoder(recorder.Body).Decode(&responseMap)
-	if err != nil {
-		t.Errorf("Decoding request failed, err: %s", err.Error())
-	}
-	if responseMap["ret"] != "ok" {
-		t.Errorf("The response ret value should have been 'ok', map: %s", responseMap)
-	}
-	if responseMap["msg"] != "Credentials ok" {
-		t.Errorf("The response msg was not correct, map: %s", responseMap)
-	}
-	token = responseMap["json-web-token"]
-	if len(token) < 20 {
-		t.Errorf("The json-web-token was too short, map: %s", responseMap)
-	}
-	util.LogEnter()
-	return token, err
-}
 
 func TestGetProductGroups(t *testing.T) {
 	util.LogEnter()
 	port := util.MyConfig["port"]
-	token, err := getTestToken(t)
+	// We could implement get this by querying /login, but let's make a shortcut.
+	token, err := CreateJsonWebToken("kari.karttinen@foo.com")
 	if err != nil {
 		t.Errorf("Failed to get test token: %s", err.Error())
 	}
@@ -239,7 +204,7 @@ func TestGetProductGroups(t *testing.T) {
 		t.Errorf("Failed to base64 decode token: %s", err.Error())
 	}
 	//NOTE: We actually call directly the handler.
-	// See below: "http.HandlerFunc(getInfo)...."
+	// See below: "http.HandlerFunc(getProductGroups)...."
 	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product-groups", nil)
 	request.Header.Add("authorization", "Basic "+encoded)
 	recorder := httptest.NewRecorder()
@@ -270,6 +235,96 @@ func TestGetProductGroups(t *testing.T) {
 	}
 	if pg1 != "Books" {
 		t.Errorf("Product group 1 should have been 'Books'")
+	}
+	util.LogEnter()
+}
+
+func TestGetProducts(t *testing.T) {
+	util.LogEnter()
+	port := util.MyConfig["port"]
+	// We could implement get this by querying /login, but let's make a shortcut.
+	token, err := CreateJsonWebToken("kari.karttinen@foo.com")
+	if err != nil {
+		t.Errorf("Failed to get test token: %s", err.Error())
+	}
+	util.LogTrace("Test token: " + token)
+	encoded := base64.StdEncoding.EncodeToString([]byte(token))
+	if err != nil {
+		t.Errorf("Failed to base64 decode token: %s", err.Error())
+	}
+	//NOTE: We actually call directly the handler.
+	// See below: "http.HandlerFunc(getProducts)...."
+	request := httptest.NewRequest("GET", "http://localhost:"+port+"/products/2", nil)
+	request.Header.Add("authorization", "Basic "+encoded)
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getProducts).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("getProducts handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	response := recorder.Body.String()
+	if len(response) == 0 {
+		t.Error("Response was nil or empty")
+	}
+	// NOTE: Might look a bit weird, but it's pretty straightforward:
+	// productsMap is a map (key:string), and values are arrays of arrays of string.
+	var products domaindb.Products
+	err = json.Unmarshal([]byte(response), &products)
+	if err != nil {
+		t.Errorf("Unmarshalling response failed: %s", err.Error())
+	}
+	productsList := products.ProductsList
+	if len(productsList) != 169 {
+		t.Errorf("Returned a wrong number of products in product group 2. Expected 168, got: %d", len(productsList))
+	}
+	product := productsList[48]
+	if product.Title != "Once Upon a Time in the West" {
+		t.Errorf("Got wrong move, expected Once Upon a Time in the West, but got: %s", product.Title)
+	}
+	util.LogEnter()
+}
+
+
+func TestGetProduct(t *testing.T) {
+	util.LogEnter()
+	port := util.MyConfig["port"]
+	// We could implement get this by querying /login, but let's make a shortcut.
+	token, err := CreateJsonWebToken("kari.karttinen@foo.com")
+	if err != nil {
+		t.Errorf("Failed to get test token: %s", err.Error())
+	}
+	util.LogTrace("Test token: " + token)
+	encoded := base64.StdEncoding.EncodeToString([]byte(token))
+	if err != nil {
+		t.Errorf("Failed to base64 decode token: %s", err.Error())
+	}
+	//NOTE: We actually call directly the handler.
+	// See below: "http.HandlerFunc(getProducts)...."
+	request := httptest.NewRequest("GET", "http://localhost:"+port+"/product/2/49", nil)
+	request.Header.Add("authorization", "Basic "+encoded)
+	recorder := httptest.NewRecorder()
+	// NOTE: Here we actually call directly the getInfo handler!
+	http.HandlerFunc(getProduct).ServeHTTP(recorder, request)
+	if status := recorder.Code; status != http.StatusOK {
+		t.Errorf("getProduct handler returned wrong status code: expected: %v actual: %v",
+			http.StatusOK, status)
+	}
+	response := recorder.Body.String()
+	if len(response) == 0 {
+		t.Error("Response was nil or empty")
+	}
+	// NOTE: Might look a bit weird, but it's pretty straightforward:
+	// productsMap is a map (key:string), and values are arrays of arrays of string.
+	var rawProduct domaindb.RawProduct
+	err = json.Unmarshal([]byte(response), &rawProduct)
+	if err != nil {
+		t.Errorf("Unmarshalling response failed: %s", err.Error())
+	}
+	// What a magical coincidence! The chosen movie is the best western of all times!
+	// And this time it was the fifth language in row. A magical coincidence, indeed!
+	if rawProduct.Title != "Once Upon a Time in the West" {
+		t.Errorf("Got wrong move, expected Once Upon a Time in the West, but got: %s", rawProduct.Title)
 	}
 	util.LogEnter()
 }

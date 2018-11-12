@@ -9,7 +9,8 @@
 - [Code Format](#code-format)
 - [Static Code Analysis](#static-code-analysis)
 - [JSON Web Token](#json-web-token)
-- [Error handling](#error-handling)
+- [Http and REST Handling](#http-and-rest-handling)
+- [Error Handling](#error-handling)
 - [Go Interfaces](#go-interfaces)
 - [Testing](#testing)
 - [GoLand Debugger](#goland-debugger)
@@ -21,6 +22,7 @@
 - [Productivity](#productivity)
 - [Lines of Code](#lines-of-code)
 - [Performance](#performance)
+- [Concurrency Support](#concurrency-support)
 - [Go vs Java](#go-vs-java)
 - [Conclusions](#conclusions)
 
@@ -123,7 +125,68 @@ Staticcheck open source version is free. If you find the tool useful you should 
 
 Damn, I needed one dependency, after all. I was hoping I could implement the Simple Server just using Go standard library but there is no JSON Web Token manipulation in the Go standard library and I really don't want to implement some poor JSON Web Token library myself for this project. So, I'm using [jwt-go](https://github.com/dgrijalva/jwt-go). Sorry, Tuomo. 
 
-# Error handling
+
+# Http and REST Handling
+
+Go is an unusual language in that sense that it provides excellent standard library and therefore you seldom need to import extra dependencies. There are some external http routing libraries in Go, e.g. [Gorilla](https://github.com/gorilla/mux) but why to introduce external dependencies to your project if you can manage with the standard library? So, for http / REST handling I just used the Go standard library [net/http](https://golang.org/pkg/net/http/). It was pretty straightforward to use net/http, example below.
+
+```go
+func getProducts(writer http.ResponseWriter, request *http.Request) {
+	util.LogEnter()
+	var parsedEmail string
+	var errorResponse ErrorResponse
+	var pgId int
+	var err error
+	var products domaindb.Products
+	if !(request.Method == "GET") {
+		errorResponse = createErrorResponse("Only GET allowed for /products")
+	} else {
+		parsedEmail, errorResponse = isValidToken(request)
+		util.LogTrace("parsedEmail: " + parsedEmail)
+		if !errorResponse.Flag {
+			// like: /products/1
+			pgIdStr := request.URL.Path[len("/products/"):]
+			if len(pgIdStr) < 1 {
+				errorResponse = createErrorResponse("pgId was less than 1")
+			} else {
+				pgId, err = strconv.Atoi(pgIdStr)
+				if err != nil {
+					errorResponse = createErrorResponse("pgId was not an integer")
+				} else {
+					util.LogTrace("pgId: " + string(pgId))
+					products = domaindb.GetProducts(pgId)
+					encoder := json.NewEncoder(writer)
+					encoder.SetEscapeHTML(false)
+					err := encoder.Encode(products)
+					if err != nil {
+						errorResponse = createErrorResponse(err.Error())
+					}
+				}
+			}
+		}
+	}
+	writeHeaders(writer, errorResponse)
+	if errorResponse.Flag {
+		writeError(writer, errorResponse)
+	}
+	util.LogExit()
+}
+// ... and registering the API:
+// Registers the API calls.
+func handleRequests() {
+	util.LogEnter()
+	http.HandleFunc("/info", getInfo)
+	http.HandleFunc("/signin", postSignin)
+	http.HandleFunc("/login", postLogin)
+	http.HandleFunc("/product-groups", getProductGroups)
+	http.HandleFunc("/products/", getProducts)
+	http.Handle("/", http.FileServer(http.Dir("./src/github.com/karimarttila/go/simpleserver/static")))
+	log.Fatal(http.ListenAndServe(":"+util.MyConfig["port"], nil))
+	util.LogExit()
+}
+```
+
+# Error Handling
 
 I kind of like Go's error handling. I have done production software with C some 20 years ago and you always had to be pretty carefull with returned error codes. In C++ you could define exceptions and throwing and catching them which kind of simplified error handling but also with a certain price. Java adopted the exception strategy but divided exceptions to runtime exceptions which you didn't have to explicitely handle and checked exceptions which you had to explicitely handle - many consider this a failed experiment since e.g. Spring exclusively uses just runtime exceptions. Go has a different strategy. There are no exceptions in the language but you can return many return values. An idiomatic way is to return the actual return value and an error - if there are no errors error value is nill, if there were errors the error value provides indication of the error. This is kind of nice but once again comes with a price - makes the error handling more explicit but creates more manual work for the programmer to handle errors.
 
@@ -729,20 +792,24 @@ Go productivity is not as good as in Python (Simple Server implementation took s
 
 So, I estimate that if I had at least a couple of years of experience of each language the table would look something like:
 
-| Language      |  Evenings |
-| ------------- |----------:|
-| Clojure       |   3       |
-| Java          |   20      |
-| Javascript    |   8       |
-| Python        |   3       |
-| Go            |   5       |
+| Language      |  Evenings | MPI |
+| ------------- |----------:|----:|
+| Clojure       |   3       |   1 |
+| Java          |   15      |   5 |
+| Javascript    |   9       |   3 |
+| Python        |   3       |   1 |
+| Go            |   6       |   2 |
 
-I dropped Java to 20 evenings I hadn't done serious Java programming for some 1,5 years and I spend some time exploring new Java 10, new Spring functionalities, how to use Java REPL etc. I could drop some 3 evenings away from Go if I had a couple of years of experience using it but Go and especially testing in Go is still a bit verbose which costs a couple of extra evenings compared to Python and Clojure (but Go's verbosity is nothing compared to Java's verbosity). I'm not that sure about Javascript's productivity but I would estimate it is about the same as Go's productivity or a bit higher (afterall I implemented Simple Server with zero Node experience for some 27 evenings compared to 8 evenings in Go). So, the clear winners of the productivity game are Python and Clojure. Therefore: if you need to implement simple scripts, surrogates to aws cli etc: use Python. If you need to manipulate a lot of data and you need excellent concurrency support: use Clojure. If you need bare metal performance with excellent concurrency support and you don't need to manipulate a lot of data: use Go. If you have a really big enterprise system and and offshore development with tens of developers working with the same code base, probably Java. And finally Javascript if you specifically for some reason need to use Node (couldn't find other real reasons to use Node since regarding various aspects there almost always is a better backend language).
+I dropped Java to 15 evenings I hadn't done serious Java programming for some 1,5 years and I spend some time exploring new Java 10, new Spring functionalities, how to use Java REPL etc. I could drop some 3 evenings away from Go if I had a couple of years of experience using it but Go and especially testing in Go is still a bit verbose which costs a couple of extra evenings compared to Python and Clojure (but Go's verbosity is nothing compared to Java's verbosity). I'm not that sure about Javascript's productivity but I would estimate it is about a bit higher than Go's productivity (afterall I implemented Simple Server with zero Node experience for some 27 evenings compared to 8 evenings in Go). So, the clear winners of the productivity game are Python and Clojure. Therefore: if you need to implement simple scripts, surrogates to aws cli etc: use Python. If you need to manipulate a lot of data and you need excellent concurrency support: use Clojure. If you need bare metal performance with excellent concurrency support and you don't need to manipulate a lot of data: use Go. If you have a really big enterprise system and and offshore development with tens of developers working with the same code base, probably Java. And finally Javascript if you specifically for some reason need to use Node (couldn't find other real reasons to use Node since regarding various aspects there almost always is a better backend language).
+
+I also created a new index - Marttila Productivity Index for Programming Languages (**MPI**) (with tongue in cheek). We divide all results of all languages with the most effective evenings (Python/Clojure: 3), and this way we get a relative productivy index for all languages (1 being the optimal number, the higher the number is from 1 the longer it takes to implement web server using that language). 
 
 
 # Lines of Code
 
 Let's once again compare the lines of code between different implementations:
+
+**TODO: Add columns: production, test and total (now just product LoC)!**
 
 
 | Language      | Files  | LoC    |
@@ -756,7 +823,17 @@ Let's once again compare the lines of code between different implementations:
 
 TODO: Comment.
 
+
 # Performance
+
+TODO:. A short text here. Example why Go compiles so fast (check Pike's keynote...)
+
+# Concurrency Support
+
+TODO: Goroutines. A short text here. 
+
+
+
 
 TODO
 
