@@ -189,7 +189,6 @@ func TestLogin(t *testing.T) {
 	util.LogEnter()
 }
 
-
 func TestGetProductGroups(t *testing.T) {
 	util.LogEnter()
 	port := util.MyConfig["port"]
@@ -284,7 +283,6 @@ func TestGetProducts(t *testing.T) {
 	}
 	util.LogEnter()
 }
-
 
 func TestGetProduct(t *testing.T) {
 	util.LogEnter()

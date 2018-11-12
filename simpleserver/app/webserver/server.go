@@ -141,7 +141,6 @@ func writeHeaders(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	}
 }
 
-
 // /info API.
 func getInfo(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
@@ -163,7 +162,6 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 	}
 	util.LogExit()
 }
-
 
 func postSignin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
@@ -351,7 +349,6 @@ func getProducts(writer http.ResponseWriter, request *http.Request) {
 	util.LogExit()
 }
 
-
 func getProduct(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	var parsedEmail string
@@ -402,7 +399,6 @@ func getProduct(writer http.ResponseWriter, request *http.Request) {
 	}
 	util.LogExit()
 }
-
 
 // Registers the API calls.
 func handleRequests() {
