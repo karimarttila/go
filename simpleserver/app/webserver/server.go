@@ -133,6 +133,7 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 
 func writeHeaders(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	writer.Header().Set("Content-Type", "application/json")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	if errorResponder.GetFlag() {
 		writer.WriteHeader(http.StatusBadRequest)
 	} else {
