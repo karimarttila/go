@@ -1,3 +1,3 @@
 #!/bin/bash
 
-go run app/main/main.go
+SS_ENV=dev go run app/main/main.go
