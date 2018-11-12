@@ -19,6 +19,7 @@
 - [Go Playground](#go-playground)
 - [Logging](#logging)
 - [Readability](#readability)
+- [CORS](#cors)
 - [Productivity](#productivity)
 - [Lines of Code](#lines-of-code)
 - [Performance](#performance)
@@ -775,6 +776,11 @@ func TestGetProductGroups(t *testing.T) {
 ```
 
 Well, Python wins hands down. If you prefer readability and you don't care about performance and concurrency support - use Python.
+
+
+# CORS
+
+Damn [Cross-origin resource sharing](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing) hit me again when testing with [Simple Frontend](https://github.com/karimarttila/clojure/tree/master/clj-ring-cljs-reagent-demo/simple-frontend). I spend some time figuring out how to provide simple configuration using the standard [net/http](https://golang.org/pkg/net/http/) library but didn't want to spend too much time with this since I wanted to finish this project this evening. So, I tried [rs/cors](https://github.com/rs/cors) and it did the trick.
 
 
 # Productivity

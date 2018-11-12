@@ -101,6 +101,7 @@ type LoginResponse struct {
 
 func writeError(writer http.ResponseWriter, errorResponder ErrorResponder) {
 	util.LogEnter()
+	writer.WriteHeader(http.StatusBadRequest)
 	err := errorResponder.WriteError(writer)
 	if err != nil {
 		// Everything else failed, just write the json as string to http.ResponseWriter.
@@ -131,32 +132,24 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 	return signinErrorResponse
 }
 
-func writeHeaders(writer http.ResponseWriter, errorResponder ErrorResponder) {
+func writeHeaders(writer http.ResponseWriter) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	if errorResponder.GetFlag() {
-		writer.WriteHeader(http.StatusBadRequest)
-	} else {
-		writer.WriteHeader(http.StatusOK)
-	}
 }
 
 // /info API.
 func getInfo(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	var errorResponse ErrorResponse // Generic ErrorResponse will do for /info just fine.
-	if !(request.Method == "GET") {
-		errorResponse = createErrorResponse("Only GET allowed for /info")
-	} else {
-		infoMsg := &InfoMessage{Info: "index.html => Info in HTML format"}
-		encoder := json.NewEncoder(writer)
-		encoder.SetEscapeHTML(false)
-		err := encoder.Encode(infoMsg)
-		if err != nil {
-			errorResponse = createErrorResponse("JSON encoder returned error: " + err.Error())
-		}
+	infoMsg := &InfoMessage{Info: "index.html => Info in HTML format"}
+	encoder := json.NewEncoder(writer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(infoMsg)
+	if err != nil {
+		errorResponse = createErrorResponse("JSON encoder returned error: " + err.Error())
 	}
-	writeHeaders(writer, errorResponse)
+
 	if errorResponse.Flag {
 		writeError(writer, errorResponse)
 	}
@@ -165,38 +158,34 @@ func getInfo(writer http.ResponseWriter, request *http.Request) {
 
 func postSignin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	var signinErrorResponse SigninErrorResponse
 	var signinData SigninData
 	var signinResponse SigninResponse
-	if !(request.Method == "POST") {
-		signinErrorResponse = createSigninErrorResponse("Only POST allowed for /signin", "")
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&signinData)
+	if err != nil {
+		signinErrorResponse = createSigninErrorResponse("Decoding request body failed", "")
 	} else {
-		decoder := json.NewDecoder(request.Body)
-		err := decoder.Decode(&signinData)
-		if err != nil {
-			signinErrorResponse = createSigninErrorResponse("Decoding request body failed", "")
+		if signinData.FirstName == "" || signinData.LastName == "" || signinData.Email == "" || signinData.Password == "" {
+			signinErrorResponse = createSigninErrorResponse("Validation failed - some fields were empty", "")
 		} else {
-			if signinData.FirstName == "" || signinData.LastName == "" || signinData.Email == "" || signinData.Password == "" {
-				signinErrorResponse = createSigninErrorResponse("Validation failed - some fields were empty", "")
+			var ret userdb.AddUserResponse
+			ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
+			if err != nil {
+				signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
 			} else {
-				var ret userdb.AddUserResponse
-				ret, err = userdb.AddUser(signinData.Email, signinData.FirstName, signinData.LastName, signinData.Password)
+				util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
+				signinResponse = SigninResponse{true, "ok", signinData.Email}
+				encoder := json.NewEncoder(writer)
+				encoder.SetEscapeHTML(false)
+				err := encoder.Encode(signinResponse)
 				if err != nil {
 					signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
-				} else {
-					util.LogTrace("AddUser returned: Ret: " + ret.Ret + ", Email: " + ret.Email)
-					signinResponse = SigninResponse{true, "ok", signinData.Email}
-					encoder := json.NewEncoder(writer)
-					encoder.SetEscapeHTML(false)
-					err := encoder.Encode(signinResponse)
-					if err != nil {
-						signinErrorResponse = createSigninErrorResponse(err.Error(), signinData.Email)
-					}
 				}
 			}
 		}
 	}
-	writeHeaders(writer, signinErrorResponse)
 	if signinErrorResponse.Flag {
 		writeError(writer, signinErrorResponse)
 	}
@@ -205,42 +194,38 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 
 func postLogin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	var errorResponse ErrorResponse // Generic ErrorResponse will do for /login just fine.
 	var loginData LoginData
 	var loginResponse LoginResponse
 	var jsonWebToken string
-	if !(request.Method == "POST") {
-		errorResponse = createErrorResponse("Only POST allowed for /login")
+	decoder := json.NewDecoder(request.Body)
+	err := decoder.Decode(&loginData)
+	if err != nil {
+		errorResponse = createErrorResponse("Decoding request body failed")
 	} else {
-		decoder := json.NewDecoder(request.Body)
-		err := decoder.Decode(&loginData)
-		if err != nil {
-			errorResponse = createErrorResponse("Decoding request body failed")
+		if loginData.Email == "" || loginData.Password == "" {
+			errorResponse = createErrorResponse("Validation failed - some fields were empty")
 		} else {
-			if loginData.Email == "" || loginData.Password == "" {
-				errorResponse = createErrorResponse("Validation failed - some fields were empty")
+			credentialsOk := userdb.CheckCredentials(loginData.Email, loginData.Password)
+			if !credentialsOk {
+				errorResponse = createErrorResponse("Credentials are not good - either email or password is not correct")
 			} else {
-				credentialsOk := userdb.CheckCredentials(loginData.Email, loginData.Password)
-				if !credentialsOk {
-					errorResponse = createErrorResponse("Credentials are not good - either email or password is not correct")
+				jsonWebToken, err = CreateJsonWebToken(loginData.Email)
+				if err != nil {
+					errorResponse = createErrorResponse("Couldn't create token: " + err.Error())
 				} else {
-					jsonWebToken, err = CreateJsonWebToken(loginData.Email)
+					loginResponse = LoginResponse{true, "ok", "Credentials ok", jsonWebToken}
+					encoder := json.NewEncoder(writer)
+					encoder.SetEscapeHTML(false)
+					err := encoder.Encode(loginResponse)
 					if err != nil {
-						errorResponse = createErrorResponse("Couldn't create token: " + err.Error())
-					} else {
-						loginResponse = LoginResponse{true, "ok", "Credentials ok", jsonWebToken}
-						encoder := json.NewEncoder(writer)
-						encoder.SetEscapeHTML(false)
-						err := encoder.Encode(loginResponse)
-						if err != nil {
-							errorResponse = createErrorResponse(err.Error())
-						}
+						errorResponse = createErrorResponse(err.Error())
 					}
 				}
 			}
 		}
 	}
-	writeHeaders(writer, errorResponse)
 	if errorResponse.Flag {
 		writeError(writer, errorResponse)
 	}
@@ -285,23 +270,19 @@ func isValidToken(request *http.Request) (email string, errorResponse ErrorRespo
 
 func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	parsedEmail, errorResponse := isValidToken(request)
 	var productGroups domaindb.ProductGroups
-	if !(request.Method == "GET") {
-		errorResponse = createErrorResponse("Only GET allowed for /product-groups")
-	} else {
-		if !errorResponse.Flag {
-			util.LogTrace("parsedEmail from token: " + parsedEmail)
-			productGroups = domaindb.GetProductGroups()
-			encoder := json.NewEncoder(writer)
-			encoder.SetEscapeHTML(false)
-			err := encoder.Encode(productGroups)
-			if err != nil {
-				errorResponse = createErrorResponse(err.Error())
-			}
+	if !errorResponse.Flag {
+		util.LogTrace("parsedEmail from token: " + parsedEmail)
+		productGroups = domaindb.GetProductGroups()
+		encoder := json.NewEncoder(writer)
+		encoder.SetEscapeHTML(false)
+		err := encoder.Encode(productGroups)
+		if err != nil {
+			errorResponse = createErrorResponse(err.Error())
 		}
 	}
-	writeHeaders(writer, errorResponse)
 	if errorResponse.Flag {
 		writeError(writer, errorResponse)
 	}
@@ -310,39 +291,35 @@ func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 
 func getProducts(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	var parsedEmail string
 	var errorResponse ErrorResponse
 	var pgId int
 	var err error
 	var products domaindb.Products
-	if !(request.Method == "GET") {
-		errorResponse = createErrorResponse("Only GET allowed for /products")
-	} else {
-		parsedEmail, errorResponse = isValidToken(request)
-		util.LogTrace("parsedEmail: " + parsedEmail)
-		if !errorResponse.Flag {
-			// like: /products/1
-			pgIdStr := request.URL.Path[len("/products/"):]
-			if len(pgIdStr) < 1 {
-				errorResponse = createErrorResponse("pgId was less than 1")
+	parsedEmail, errorResponse = isValidToken(request)
+	util.LogTrace("parsedEmail: " + parsedEmail)
+	if !errorResponse.Flag {
+		// like: /products/1
+		pgIdStr := request.URL.Path[len("/products/"):]
+		if len(pgIdStr) < 1 {
+			errorResponse = createErrorResponse("pgId was less than 1")
+		} else {
+			pgId, err = strconv.Atoi(pgIdStr)
+			if err != nil {
+				errorResponse = createErrorResponse("pgId was not an integer")
 			} else {
-				pgId, err = strconv.Atoi(pgIdStr)
+				util.LogTrace("pgId: " + string(pgId))
+				products = domaindb.GetProducts(pgId)
+				encoder := json.NewEncoder(writer)
+				encoder.SetEscapeHTML(false)
+				err := encoder.Encode(products)
 				if err != nil {
-					errorResponse = createErrorResponse("pgId was not an integer")
-				} else {
-					util.LogTrace("pgId: " + string(pgId))
-					products = domaindb.GetProducts(pgId)
-					encoder := json.NewEncoder(writer)
-					encoder.SetEscapeHTML(false)
-					err := encoder.Encode(products)
-					if err != nil {
-						errorResponse = createErrorResponse(err.Error())
-					}
+					errorResponse = createErrorResponse(err.Error())
 				}
 			}
 		}
 	}
-	writeHeaders(writer, errorResponse)
 	if errorResponse.Flag {
 		writeError(writer, errorResponse)
 	}
@@ -351,49 +328,45 @@ func getProducts(writer http.ResponseWriter, request *http.Request) {
 
 func getProduct(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	var parsedEmail string
 	var errorResponse ErrorResponse
 	var pgId, pId int
 	var err error
 	var rawProduct domaindb.RawProduct
-	if !(request.Method == "GET") {
-		errorResponse = createErrorResponse("Only GET allowed for /product")
-	} else {
-		parsedEmail, errorResponse = isValidToken(request)
-		util.LogTrace("parsedEmail: " + parsedEmail)
-		if !errorResponse.Flag {
-			// like: /product/1
-			idsStr := request.URL.Path[len("/product/"):]
-			if len(idsStr) < 1 {
-				errorResponse = createErrorResponse("idsStr was less than 1")
+	parsedEmail, errorResponse = isValidToken(request)
+	util.LogTrace("parsedEmail: " + parsedEmail)
+	if !errorResponse.Flag {
+		// like: /product/1
+		idsStr := request.URL.Path[len("/product/"):]
+		if len(idsStr) < 1 {
+			errorResponse = createErrorResponse("idsStr was less than 1")
+		} else {
+			ids := strings.Split(idsStr, "/")
+			if len(ids) != 2 {
+				errorResponse = createErrorResponse("We didn't find both product group id and product id in the url parameters")
 			} else {
-				ids := strings.Split(idsStr, "/")
-				if len(ids) != 2 {
-					errorResponse = createErrorResponse("We didn't find both product group id and product id in the url parameters")
+				pgId, err = strconv.Atoi(ids[0])
+				if err != nil {
+					errorResponse = createErrorResponse("pgId was not an integer")
 				} else {
-					pgId, err = strconv.Atoi(ids[0])
+					pId, err = strconv.Atoi(ids[1])
 					if err != nil {
-						errorResponse = createErrorResponse("pgId was not an integer")
+						errorResponse = createErrorResponse("pId was not an integer")
 					} else {
-						pId, err = strconv.Atoi(ids[1])
+						util.LogTrace("pgId: " + string(pgId) + ", pId: " + string(pId))
+						rawProduct = domaindb.GetProduct(pgId, pId)
+						encoder := json.NewEncoder(writer)
+						encoder.SetEscapeHTML(false)
+						err := encoder.Encode(rawProduct)
 						if err != nil {
-							errorResponse = createErrorResponse("pId was not an integer")
-						} else {
-							util.LogTrace("pgId: " + string(pgId) + ", pId: " + string(pId))
-							rawProduct = domaindb.GetProduct(pgId, pId)
-							encoder := json.NewEncoder(writer)
-							encoder.SetEscapeHTML(false)
-							err := encoder.Encode(rawProduct)
-							if err != nil {
-								errorResponse = createErrorResponse(err.Error())
-							}
+							errorResponse = createErrorResponse(err.Error())
 						}
 					}
 				}
 			}
 		}
 	}
-	writeHeaders(writer, errorResponse)
 	if errorResponse.Flag {
 		writeError(writer, errorResponse)
 	}
