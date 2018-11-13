@@ -794,10 +794,10 @@ Go productivity is not as good as in Python (Simple Server implementation took s
 | Language      |  Evenings | Experience before implementation (+ comments)   |
 | ------------- |----------:|-------------------------------------------------|
 | Java          |   18      | 20 years (I.e. 3 weeks * 6 evenings = 18)       |
-| Go            |   8       | Zero                                            |
+| Go            |    8      | Zero                                            |
 | Javascript    |   18      | Javascript some weeks, Node zero                |
-| Clojure       |   3       | About one year. (I.e. 3 with current knowledge) |
-| Python        |   3       | 20 years                                        |
+| Clojure       |   13?     | About one year. (I.e. 3 with current knowledge) |
+| Python        |    3      | 20 years                                        |
 
 
 So, I estimate that if I had at least a couple of years of experience of each language the table would look something like:
@@ -805,10 +805,10 @@ So, I estimate that if I had at least a couple of years of experience of each la
 | Language      |  Evenings | MPI |
 | ------------- |----------:|----:|
 | Java          |   12      |   4 |
-| Go            |   6       |   2 |
-| Javascript    |   9       |   3 |
-| Clojure       |   3       |   1 |
-| Python        |   3       |   1 |
+| Go            |    6      |   2 |
+| Javascript    |    9      |   3 |
+| Clojure       |    3      |   1 |
+| Python        |    3      |   1 |
 
 
 I dropped Java to 12 evenings since when implementing the Simple Server in Java I hadn't done serious Java programming for some 1,5 years and I spent quite a lot of time exploring new Java 10, new Spring functionalities, new IDEA features, how to use Java REPL etc. I could drop some 2 evenings away from Go if I had a couple of years of experience using it but Go and especially testing in Go is still a bit verbose which costs a couple of extra evenings compared to Python and Clojure (but Go's verbosity is nothing compared to Java's verbosity). Learning Javascript and Node took considerably more than learning Go (for both languages I started basically from Zero, but did Go implementation in about 8 evenings and Node implementation in about 18 evenings). I'm not that sure about Javascript's productivity but I would estimate it is about a bit higher than Go's productivity based on my experiences while learning the languages (but still considerably less than Java). Go's productivity is after all pretty good considering that it is a statically typed language. 
@@ -852,7 +852,7 @@ Headers:
 | Python        |      8 |    530 |      5 |    317 |  847 |   1.0 |  1  |
 
 
-So, Python is the winner in both Marttila Lines of Code Index and Marttila Productivity Index. Clojure doesn't lose that much, productivity being the same, but MLCI being just 10% higher. Javascript loses in productivity quite a bit taking some 3x more implementation time and MLCI is some 30% higher. Go breaks the rule between correlation between MLCI and MPI - MLCI is 90% higher but MPI is only 2x. And Java performs worst of all: MLCI is 140% higher and MPI is 4x.
+So, Python is the winner in both Marttila Lines of Code Index and Marttila Productivity Index. Clojure doesn't lose that much, productivity being the same, but MLCI being just 10% higher. Javascript loses in productivity quite a bit taking some 3x more implementation time and MLCI is some 30% higher. Go breaks the rule of correlation between MLCI and MPI - MLCI is 90% higher but MPI is only 2x. And Java performs worst of all: MLCI is 140% higher and MPI is 4x.
 
 
 # Performance
