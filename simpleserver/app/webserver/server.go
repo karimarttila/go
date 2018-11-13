@@ -137,13 +137,7 @@ func createSigninErrorResponse(msg string, email string) (signinErrorResponse Si
 func writeHeaders(writer http.ResponseWriter) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	//writer.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin")
-	//writer.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
-
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-
-
 
 }
 
@@ -208,7 +202,6 @@ func postSignin(writer http.ResponseWriter, request *http.Request) {
 func postLogin(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
-
 	if request.Method == "OPTIONS" {
 		return
 	}
@@ -287,29 +280,10 @@ func isValidToken(request *http.Request) (email string, errorResponse ErrorRespo
 
 func getProductGroups(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
+	writeHeaders(writer)
 	if request.Method == "OPTIONS" {
-		//writer.Header().Set("Access-Control-Allow-Origin", "*")
-		if origin := request.Header.Get("Origin"); origin != "" {
-            writer.Header().Set("Access-Control-Allow-Origin", origin)
-        }
-		writer.Header().Set("Access-Control-Allow-Origin", "*")
-		writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-        //writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-        //writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
-        //writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		request.Header.Del("Access-Control-Request-Headers")
-		acc := request.Header.Get("Access-Control-Request-Headers")
-		auth := request.Header.Get("Authorization")
-		util.LogTrace("acc: " + acc)
-		util.LogTrace("auth: " + auth)
-		//writeHeaders(writer)
 		return
 	}
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin")
-	writer.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH,OPTIONS");
-
 	parsedEmail, errorResponse := isValidToken(request)
 	var productGroups domaindb.ProductGroups
 	if !errorResponse.Flag {
@@ -332,21 +306,6 @@ func getProducts(writer http.ResponseWriter, request *http.Request) {
 	util.LogEnter()
 	writeHeaders(writer)
 	if request.Method == "OPTIONS" {
-		//writer.Header().Set("Access-Control-Allow-Origin", "*")
-		if origin := request.Header.Get("Origin"); origin != "" {
-			writer.Header().Set("Access-Control-Allow-Origin", origin)
-		}
-		writer.Header().Set("Access-Control-Allow-Origin", "*")
-		writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		//writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		//writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token")
-		//writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		request.Header.Del("Access-Control-Request-Headers")
-		acc := request.Header.Get("Access-Control-Request-Headers")
-		auth := request.Header.Get("Authorization")
-		util.LogTrace("acc: " + acc)
-		util.LogTrace("auth: " + auth)
-		//writeHeaders(writer)
 		return
 	}
 	var parsedEmail string
