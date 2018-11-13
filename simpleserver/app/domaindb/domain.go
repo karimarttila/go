@@ -30,22 +30,19 @@ type RawProduct struct {
 	GenreOrLanguage  string
 }
 
-
 type RawProducts struct {
 	RawProductsList [][8]string `json:"raw-product-groups"`
 }
 
 type Products struct {
 	ProductsList [][4]string `json:"products"`
-	Ret          string    `json:"ret"`
+	Ret          string      `json:"ret"`
 }
 
 type Product struct {
 	Product [8]string `json:"product"`
-	Ret          string    `json:"ret"`
+	Ret     string    `json:"ret"`
 }
-
-
 
 type DomainDb struct {
 	productGroups  ProductGroups
