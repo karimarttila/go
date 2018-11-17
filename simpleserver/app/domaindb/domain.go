@@ -19,17 +19,6 @@ type ProductGroups struct {
 	ProductGroupsMap map[string]string `json:"product-groups"`
 }
 
-type RawProduct struct {
-	PgId             int
-	PId              int
-	Title            string
-	Price            float64
-	AuthorOrDirector string
-	Year             int
-	Country          string
-	GenreOrLanguage  string
-}
-
 type RawProducts struct {
 	RawProductsList [][8]string `json:"raw-product-groups"`
 }
